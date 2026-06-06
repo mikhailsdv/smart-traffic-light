@@ -1,0 +1,7 @@
+services:
+  traffic-light:
+    build: .
+    env_file:
+      - .env
+    command: ["node", "dist/index.js", "--script", "cycle", "--provider", "tasmota"]
+    restart: unless-stopped

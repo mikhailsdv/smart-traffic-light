@@ -1,0 +1,22 @@
+{
+  "name": "smart-traffic-light",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "dev:web": "tsx watch src/web/server.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "start:web": "node dist/web/server.js",
+    "docker": "docker compose down && docker compose up --build -d"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.2",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
+}
