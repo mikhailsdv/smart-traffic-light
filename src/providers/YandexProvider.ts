@@ -1,5 +1,6 @@
 import { getRequiredEnv } from "../env.js";
 import type { TrafficLightColor, TrafficLightProvider } from "../types.js";
+import { getYandexAccessToken } from "./yandexAuth.js";
 
 const deviceEnvByColor: Record<TrafficLightColor, string> = {
   red: "YANDEX_RED_DEVICE_ID",
@@ -8,14 +9,15 @@ const deviceEnvByColor: Record<TrafficLightColor, string> = {
 };
 
 export class YandexProvider implements TrafficLightProvider {
-  private readonly token = getRequiredEnv("YANDEX_OAUTH_TOKEN");
+  private readonly tokenPromise = getYandexAccessToken();
 
   async setLight(color: TrafficLightColor, enabled: boolean): Promise<void> {
     const deviceId = getRequiredEnv(deviceEnvByColor[color]);
+    const token = await this.tokenPromise;
     const response = await fetch("https://api.iot.yandex.net/v1.0/devices/actions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${this.token}`,
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({

@@ -3,5 +3,5 @@ services:
     build: .
     env_file:
       - .env
-    command: ["node", "dist/index.js", "--script", "cycle", "--provider", "tasmota"]
+    command: ["node", "dist/index.js", "--script", "cycle", "--provider", "yandex"]
     restart: unless-stopped

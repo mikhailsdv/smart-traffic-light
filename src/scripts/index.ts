@@ -1,8 +1,8 @@
-import { greenScript } from "./green.js";
+import { cycleScript } from "./cycle.js";
 import type { TrafficLightScript } from "../types.js";
 
 export const trafficLightScripts: TrafficLightScript[] = [
-  greenScript,
+  cycleScript,
 ];
 
 export function getTrafficLightScript(name: string): TrafficLightScript {

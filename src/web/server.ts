@@ -1,11 +1,11 @@
 import "dotenv/config";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { TasmotaProvider } from "../providers/TasmotaProvider.js";
-import { trafficLightColors, type TrafficLightColor, type TrafficLightState } from "../types.js";
+import { createProvider, type ProviderName } from "../providers/createProvider.js";
+import { trafficLightColors, type TrafficLightColor, type TrafficLightProvider, type TrafficLightState } from "../types.js";
 import { trafficLightUi } from "./ui.js";
 
 const port = Number(process.env.PORT ?? 3_000);
-const provider = new TasmotaProvider();
+const providers = new Map<ProviderName, TrafficLightProvider>();
 const state: TrafficLightState = {
   red: false,
   yellow: false,
@@ -45,6 +45,38 @@ function isTrafficLightColor(value: string): value is TrafficLightColor {
   return trafficLightColors.includes(value as TrafficLightColor);
 }
 
+function isProviderName(value: string): value is ProviderName {
+  return value === "tasmota" || value === "yandex";
+}
+
+function getProvider(name: ProviderName): TrafficLightProvider {
+  const cachedProvider = providers.get(name);
+
+  if (cachedProvider) {
+    return cachedProvider;
+  }
+
+  const provider = createProvider(name);
+
+  providers.set(name, provider);
+
+  return provider;
+}
+
+function parseProviderName(value: unknown): ProviderName {
+  if (!value || typeof value !== "object" || Array.isArray(value) || !("provider" in value)) {
+    return "tasmota";
+  }
+
+  const provider = value.provider;
+
+  if (typeof provider !== "string" || !isProviderName(provider)) {
+    throw new Error("Provider must be tasmota or yandex");
+  }
+
+  return provider;
+}
+
 function parseStatePatch(value: unknown): Partial<TrafficLightState> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new Error("Request body must be an object");
@@ -53,6 +85,10 @@ function parseStatePatch(value: unknown): Partial<TrafficLightState> {
   const patch: Partial<TrafficLightState> = {};
 
   for (const [key, enabled] of Object.entries(value)) {
+    if (key === "provider") {
+      continue;
+    }
+
     if (!isTrafficLightColor(key)) {
       throw new Error(`Unknown lamp: ${key}`);
     }
@@ -68,7 +104,9 @@ function parseStatePatch(value: unknown): Partial<TrafficLightState> {
 }
 
 async function handleToggle(request: IncomingMessage, response: ServerResponse): Promise<void> {
-  const patch = parseStatePatch(await readJson(request));
+  const body = await readJson(request);
+  const provider = getProvider(parseProviderName(body));
+  const patch = parseStatePatch(body);
 
   for (const color of trafficLightColors) {
     const enabled = patch[color];

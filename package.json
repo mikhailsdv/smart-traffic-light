@@ -9,6 +9,10 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "start:web": "node dist/web/server.js",
+    "yandex:oauth-url": "tsx src/tools/yandexOAuthUrl.ts",
+    "yandex:exchange-code": "tsx src/tools/yandexExchangeCode.ts",
+    "yandex:user-info": "tsx src/tools/yandexUserInfo.ts",
+    "yandex:traffic-light-group": "tsx src/tools/yandexTrafficLightGroup.ts",
     "docker": "docker compose down && docker compose up --build -d"
   },
   "dependencies": {
