@@ -20,6 +20,8 @@ Main code lives in `src/`:
 
 - `npm run dev -- --script cycle --provider tasmota` runs a script in watch mode.
 - `npm run dev -- --script cycle --provider yandex` runs the same script through Yandex Smart Home.
+- `npm run dev -- --script happyBirthday --provider yandex` runs random two-lamp pairs.
+- `npm run dev -- --script telegram-hearts --provider yandex` listens to Telegram heart commands.
 - `npm run build` compiles with `tsc`.
 - `npm run start -- --script cycle --provider yandex` runs compiled CLI code with the production provider.
 - `npm run dev:web` starts the web UI server.
@@ -37,6 +39,9 @@ Use `.env.example` as the public template. Do not commit `.env`.
 Current env variables:
 
 - `TASMOTA_HOST`
+- `TELEGRAM_API_ID`
+- `TELEGRAM_API_HASH`
+- `TELEGRAM_CHAT_ID`
 - `YANDEX_CLIENT_ID`
 - `YANDEX_CLIENT_SECRET`
 - `YANDEX_REFRESH_TOKEN`
@@ -45,6 +50,8 @@ Current env variables:
 - `YANDEX_GREEN_DEVICE_ID`
 
 Yandex tokens are stored in `.tokens/yandex.json` after OAuth exchange or refresh. `.tokens` is ignored by git. Do not print token values in summaries or logs. On VPS, `YANDEX_REFRESH_TOKEN` in `.env` is the source of truth; `.tokens` is only a local cache and should not be required as persistent container state.
+
+Telegram userbot sessions are stored in `.sessions/telegram.session`. `.sessions` is ignored by git and mounted in Docker Compose. Do not commit Telegram session files.
 
 ## Providers
 
@@ -65,6 +72,10 @@ VPS production uses only `YandexProvider`. Keep Tasmota support for local LAN/de
 Scripts must implement `TrafficLightScript` and be registered in `src/scripts/index.ts`.
 
 The `cycle` script switches `red -> yellow -> green`, waits 1.5 seconds for each color, then awaits `controller.turnOff()` before moving to the next color.
+
+The `happyBirthday` script switches every 3 seconds between random two-lamp pairs and avoids repeating the same pair twice in a row. It uses `controller.set(...)`, not `turnOff()`, so transition requests directly update the three lamp states.
+
+The `telegram-hearts` script logs into a Telegram user account with `@mtcute/node`, prints QR login codes with `qrcode`, listens to `TELEGRAM_CHAT_ID`, and maps `❤️`, `💛`, `💚` to `red`, `yellow`, `green`. Regular heart messages and animated heart/dice messages blink the selected lamp 3 times. New heart commands cancel the previous blink sequence.
 
 ## Web UI
 

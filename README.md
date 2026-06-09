@@ -32,11 +32,25 @@ Run `cycle` locally with Yandex:
 npm run dev -- --script cycle --provider yandex
 ```
 
+Run Telegram heart listener locally:
+
+```bash
+npm run dev -- --script telegram-hearts --provider yandex
+```
+
+Run Happy Birthday mode locally:
+
+```bash
+npm run dev -- --script happyBirthday --provider yandex
+```
+
 Build and run compiled code:
 
 ```bash
 npm run build
 npm run start -- --script cycle --provider yandex
+npm run start -- --script telegram-hearts --provider yandex
+npm run start -- --script happyBirthday --provider yandex
 ```
 
 ## Web UI
@@ -85,6 +99,34 @@ Authorization flow:
    npm run yandex:traffic-light-group
    ```
 
+## Telegram Userbot
+
+Set these values in `.env`:
+
+```env
+TELEGRAM_API_ID=
+TELEGRAM_API_HASH=
+TELEGRAM_CHAT_ID=5105631123
+```
+
+Run the listener:
+
+```bash
+npm run dev -- --script telegram-hearts --provider yandex
+```
+
+On first login, scan the QR code printed in the terminal. The Telegram session is stored in `.sessions/telegram.session`; this directory is ignored by git and mounted into Docker Compose.
+
+The listener reacts only to messages from `TELEGRAM_CHAT_ID`:
+
+- `❤️` blinks the red lamp 3 times
+- `💛` blinks the yellow lamp 3 times
+- `💚` blinks the green lamp 3 times
+
+A new heart message interrupts the previous blink sequence.
+
+Animated heart messages do the same blink sequence.
+
 ## VPS Docker
 
 On VPS, set these values in `.env`:
@@ -93,6 +135,9 @@ On VPS, set these values in `.env`:
 YANDEX_CLIENT_ID=
 YANDEX_CLIENT_SECRET=
 YANDEX_REFRESH_TOKEN=
+TELEGRAM_API_ID=
+TELEGRAM_API_HASH=
+TELEGRAM_CHAT_ID=5105631123
 YANDEX_RED_DEVICE_ID=
 YANDEX_YELLOW_DEVICE_ID=
 YANDEX_GREEN_DEVICE_ID=

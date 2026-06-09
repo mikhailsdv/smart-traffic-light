@@ -3,5 +3,7 @@ services:
     build: .
     env_file:
       - .env
+    volumes:
+      - ./.sessions:/app/.sessions
     command: ["node", "dist/index.js", "--script", "cycle", "--provider", "yandex"]
     restart: unless-stopped
