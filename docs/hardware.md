@@ -166,11 +166,11 @@ Open **Configuration → Matter** in the Tasmota web UI.
    | Green | Light 0 OnOff | 3 |
 
    If an endpoint is missing, add it with **+ Add endpoint**. Press **Save** under the endpoint list.
-4. Check **Commissioning open** and press **Save** in the Matter block. Tasmota shows the pairing QR code and numeric code in its web UI.
+4. Check **Commissioning open** and press **Save** in the Matter block. The pairing QR code appears on the Tasmota main page.
 
 ### Add the lamps to Yandex
 
-1. In the Yandex Smart Home app, add a new Matter device and scan the QR code or enter the numeric code from Tasmota.
+1. In the Yandex Smart Home app, add a new Matter device and scan the QR code from the Tasmota main page.
 2. Yandex adds the bridge and three lamps. Give the lamps clear names.
 3. Create a group named `Светофор` and put the three lamps into it. The code works with this group, not with the bridge device.
 4. In Tasmota, uncheck **Commissioning open** and press **Save**, so the device cannot be paired again by accident.
