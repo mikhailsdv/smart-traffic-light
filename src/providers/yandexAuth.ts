@@ -8,6 +8,10 @@ interface YandexTokenResponse {
 }
 
 const scopes = ["iot:view", "iot:control"];
+const requestTimeoutMs = 10_000;
+
+let cachedTokens: StoredYandexTokens | null = null;
+let pendingRefresh: Promise<string> | null = null;
 
 function getYandexCredentials(): string {
   return Buffer
@@ -56,6 +60,7 @@ export async function exchangeYandexCode(code: string): Promise<void> {
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body,
+    signal: AbortSignal.timeout(requestTimeoutMs),
   });
   const responseBody = await response.text();
 
@@ -63,20 +68,29 @@ export async function exchangeYandexCode(code: string): Promise<void> {
     throw new Error(`Yandex token request failed: ${response.status} ${response.statusText}\n${responseBody}`);
   }
 
-  await writeYandexTokens(toStoredYandexTokens(JSON.parse(responseBody) as YandexTokenResponse));
+  cachedTokens = toStoredYandexTokens(JSON.parse(responseBody) as YandexTokenResponse);
+  await writeYandexTokens(cachedTokens);
 }
 
-export async function getYandexAccessToken(): Promise<string> {
-  const storedTokens = await readYandexTokens();
+export async function getYandexAccessToken(forceRefresh = false): Promise<string> {
+  cachedTokens ??= await readYandexTokens();
 
-  if (storedTokens.accessToken && storedTokens.expiresAt && storedTokens.expiresAt > Date.now() + 60_000) {
-    return storedTokens.accessToken;
+  if (!forceRefresh && cachedTokens.accessToken && cachedTokens.expiresAt && cachedTokens.expiresAt > Date.now() + 60_000) {
+    return cachedTokens.accessToken;
   }
 
+  pendingRefresh ??= refreshYandexAccessToken(cachedTokens).finally(() => {
+    pendingRefresh = null;
+  });
+
+  return pendingRefresh;
+}
+
+async function refreshYandexAccessToken(storedTokens: StoredYandexTokens): Promise<string> {
   const refreshToken = storedTokens.refreshToken ?? process.env.YANDEX_REFRESH_TOKEN;
 
   if (!refreshToken) {
-    throw new Error("Missing Yandex refresh token. Run npm run yandex:oauth-url and npm run yandex:exchange-code -- --code <code>");
+    throw new Error("Missing Yandex refresh token. Run npm run yandex:oauth-url and npm run yandex:exchange-code -- <code>");
   }
 
   const body = new URLSearchParams({
@@ -90,6 +104,7 @@ export async function getYandexAccessToken(): Promise<string> {
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body,
+    signal: AbortSignal.timeout(requestTimeoutMs),
   });
   const responseBody = await response.text();
 
@@ -100,6 +115,7 @@ export async function getYandexAccessToken(): Promise<string> {
   const tokenResponse = JSON.parse(responseBody) as YandexTokenResponse;
   const tokens = toStoredYandexTokens(tokenResponse, storedTokens);
 
+  cachedTokens = tokens;
   await writeYandexTokens(tokens);
 
   return tokenResponse.access_token;

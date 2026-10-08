@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { createProvider, type ProviderName } from "../providers/createProvider.js";
+import { createProvider, isProviderName, providerNames, type ProviderName } from "../providers/createProvider.js";
 import { trafficLightColors, type TrafficLightColor, type TrafficLightProvider, type TrafficLightState } from "../types.js";
 import { trafficLightUi } from "./ui.js";
 
@@ -22,7 +22,19 @@ function sendHtml(response: ServerResponse, body: string): void {
   response.end(body);
 }
 
+class HttpError extends Error {
+  constructor(readonly statusCode: number, message: string) {
+    super(message);
+  }
+}
+
 function readJson(request: IncomingMessage): Promise<unknown> {
+  const contentType = request.headers["content-type"]?.split(";")[0]?.trim().toLowerCase();
+
+  if (contentType !== "application/json") {
+    return Promise.reject(new HttpError(415, "Content-Type must be application/json"));
+  }
+
   return new Promise((resolve, reject) => {
     let body = "";
 
@@ -43,10 +55,6 @@ function readJson(request: IncomingMessage): Promise<unknown> {
 
 function isTrafficLightColor(value: string): value is TrafficLightColor {
   return trafficLightColors.includes(value as TrafficLightColor);
-}
-
-function isProviderName(value: string): value is ProviderName {
-  return value === "tasmota" || value === "yandex";
 }
 
 function getProvider(name: ProviderName): TrafficLightProvider {
@@ -71,7 +79,7 @@ function parseProviderName(value: unknown): ProviderName {
   const provider = value.provider;
 
   if (typeof provider !== "string" || !isProviderName(provider)) {
-    throw new Error("Provider must be tasmota or yandex");
+    throw new HttpError(400, `Provider must be one of: ${providerNames.join(", ")}`);
   }
 
   return provider;
@@ -144,8 +152,9 @@ const server = createServer((request, response) => {
     sendJson(response, 404, { error: "Not found" });
   })().catch((error: unknown) => {
     const message = error instanceof Error ? error.message : String(error);
+    const statusCode = error instanceof HttpError ? error.statusCode : 500;
 
-    sendJson(response, 500, { error: message });
+    sendJson(response, statusCode, { error: message });
   });
 });
 

@@ -61,7 +61,13 @@ Telegram userbot sessions are stored in `.sessions/telegram.session`. `.sessions
 - `yellow` -> `Power2`
 - `green` -> `Power3`
 
-`YandexProvider` uses Yandex Smart Home API. It does not store a static access token in env; it obtains one via `getYandexAccessToken()` from `src/providers/yandexAuth.ts`.
+`YandexProvider` uses Yandex Smart Home API. It does not store a static access token in env; it obtains one via `getYandexAccessToken()` from `src/providers/yandexAuth.ts` on every request. `yandexAuth.ts` caches tokens in memory, refreshes them shortly before expiry, and shares one in-flight refresh between concurrent callers. On a `401` response `YandexProvider` forces a refresh and retries once.
+
+Providers implement `setLight(...)` and may implement optional `setState(...)`. `SmartTrafficLightController.set(...)` uses `setState(...)` when available; `YandexProvider` sends all three lamps in one `/devices/actions` request.
+
+Provider names live in `providerNames` in `src/providers/createProvider.ts`; use `isProviderName(...)` instead of hardcoding the list.
+
+All outgoing `fetch` calls use `AbortSignal.timeout(...)`: 5 seconds for Tasmota, 10 seconds for Yandex.
 
 For Yandex Smart Home, the target traffic light is the group named `Светофор` from `groups`, not the bridge device with the same name from `devices`.
 
@@ -71,7 +77,7 @@ VPS production uses only `YandexProvider`. Keep Tasmota support for local LAN/de
 
 Scripts must implement `TrafficLightScript` and be registered in `src/scripts/index.ts`.
 
-The `cycle` script switches `red -> yellow -> green`, waits 1.5 seconds for each color, then awaits `controller.turnOff()` before moving to the next color.
+The `cycle` script switches `red -> yellow -> green`, waits 3 seconds for each color, then awaits `controller.turnOff()` before moving to the next color.
 
 The `happyBirthday` script switches every 3 seconds between random two-lamp pairs and avoids repeating the same pair twice in a row. It uses `controller.set(...)`, not `turnOff()`, so transition requests directly update the three lamp states.
 
@@ -83,7 +89,7 @@ The `telegram-hearts` script logs into a Telegram user account with `@mtcute/nod
 
 - `GET /`
 - `GET /status`
-- `POST /toggle`
+- `POST /toggle` (requires `Content-Type: application/json`, otherwise `415`)
 
 The current server keeps state in memory. If devices are changed outside this process, `/status` may be stale. The UI stores the selected provider in `localStorage` and sends it in `/toggle` payloads.
 

@@ -23,6 +23,7 @@ async function getYandexUserInfo(): Promise<YandexUserInfo> {
     headers: {
       Authorization: `Bearer ${token}`,
     },
+    signal: AbortSignal.timeout(10_000),
   });
   const body = await response.text();
 

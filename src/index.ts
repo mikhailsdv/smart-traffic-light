@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { SmartTrafficLightController } from "./controller/SmartTrafficLightController.js";
-import { createProvider } from "./providers/createProvider.js";
+import { createProvider, providerNames } from "./providers/createProvider.js";
 import { getTrafficLightScript, trafficLightScripts } from "./scripts/index.js";
 
 interface CliOptions {
@@ -19,7 +19,7 @@ function parseCliOptions(argv: string[]): CliOptions {
     : argv[providerFlagIndex + 1];
 
   if (!scriptName) {
-    throw new Error(`Usage: npm run dev -- --script <script> --provider tasmota|yandex. Available scripts: ${trafficLightScripts.map((script) => script.name).join(", ")}`);
+    throw new Error(`Usage: npm run dev -- --script <script> --provider ${providerNames.join("|")}. Available scripts: ${trafficLightScripts.map((script) => script.name).join(", ")}`);
   }
 
   if (!providerName) {

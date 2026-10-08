@@ -1,4 +1,5 @@
 import type { TrafficLightColor, TrafficLightController } from "../types.js";
+import { delay } from "../utils/delay.js";
 
 const blinkDelayMs = 250;
 
@@ -26,29 +27,19 @@ export class TelegramHeartCommandRunner {
       }
 
       await this.controller.turnOff();
-      await this.wait(runId);
+      await delay(blinkDelayMs);
 
       if (this.isCancelled(runId)) {
         return;
       }
 
       await this.controller.setOnly(color);
-      await this.wait(runId);
+      await delay(blinkDelayMs);
     }
   }
 
   private isCancelled(runId: number): boolean {
     return runId !== this.runId;
-  }
-
-  private async wait(runId: number): Promise<void> {
-    await new Promise<void>((resolve) => {
-      setTimeout(resolve, blinkDelayMs);
-    });
-
-    if (this.isCancelled(runId)) {
-      return;
-    }
   }
 
   private async enqueue(task: () => Promise<void>): Promise<void> {

@@ -7,6 +7,8 @@ const defaultChannelByColor: Record<TrafficLightColor, string> = {
   green: "Power3",
 };
 
+const requestTimeoutMs = 5_000;
+
 export class TasmotaProvider implements TrafficLightProvider {
   private readonly baseUrl: string;
 
@@ -23,7 +25,7 @@ export class TasmotaProvider implements TrafficLightProvider {
 
     url.searchParams.set("cmnd", command);
 
-    const response = await fetch(url);
+    const response = await fetch(url, { signal: AbortSignal.timeout(requestTimeoutMs) });
 
     if (!response.ok) {
       throw new Error(`Tasmota request failed: ${response.status} ${response.statusText}`);

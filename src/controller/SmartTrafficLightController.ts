@@ -4,6 +4,11 @@ export class SmartTrafficLightController implements TrafficLightController {
   constructor(private readonly provider: TrafficLightProvider) {}
 
   async set(state: TrafficLightState): Promise<void> {
+    if (this.provider.setState) {
+      await this.provider.setState(state);
+      return;
+    }
+
     await Promise.all(
       trafficLightColors.map((color) => this.provider.setLight(color, state[color])),
     );
