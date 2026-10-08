@@ -149,10 +149,32 @@ Unplug the USB cable from the computer before this step. Nothing is connected to
 
 Tasmota on ESP32 can expose relays over Matter, and the Yandex Smart Home app can add Matter devices through a Yandex hub or speaker with Matter support.
 
-1. In the Tasmota web UI open **Configuration → Matter** and enable Matter. Check that the three relays are listed as endpoints.
-2. In the Yandex Smart Home app, add a new Matter device and scan the pairing code shown by Tasmota.
-3. Name the lamps and put them into a group named `Светофор`. The code uses this group.
-4. Follow the [Yandex OAuth section in the README](../README.md#yandex-oauth), then run `npm run yandex:traffic-light-group` to get the lamp IDs for `.env`.
+### Configure Matter in Tasmota
+
+Open **Configuration → Matter** in the Tasmota web UI.
+
+<img src="images/tasmota-matter.png" alt="Tasmota Matter settings" width="415">
+
+1. Check **Matter enable**.
+2. Leave **Force Static endpoints (non-bridge)** unchecked. Tasmota then works as a Matter bridge with one endpoint per lamp.
+3. Under **Local sensors and devices**, set up three endpoints of type **Light 0 OnOff**:
+
+   | Name | Type | Relay number |
+   |---|---|---|
+   | Red | Light 0 OnOff | 1 |
+   | Yellow | Light 0 OnOff | 2 |
+   | Green | Light 0 OnOff | 3 |
+
+   If an endpoint is missing, add it with **+ Add endpoint**. Press **Save** under the endpoint list.
+4. Check **Commissioning open** and press **Save** in the Matter block. Tasmota shows the pairing QR code and numeric code in its web UI.
+
+### Add the lamps to Yandex
+
+1. In the Yandex Smart Home app, add a new Matter device and scan the QR code or enter the numeric code from Tasmota.
+2. Yandex adds the bridge and three lamps. Give the lamps clear names.
+3. Create a group named `Светофор` and put the three lamps into it. The code works with this group, not with the bridge device.
+4. In Tasmota, uncheck **Commissioning open** and press **Save**, so the device cannot be paired again by accident.
+5. Follow the [Yandex OAuth section in the README](../README.md#yandex-oauth), then run `npm run yandex:traffic-light-group` to get the lamp IDs for `.env`.
 
 ## Old firmware
 
