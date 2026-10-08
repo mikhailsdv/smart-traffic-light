@@ -37,6 +37,6 @@ export class YandexProvider implements TrafficLightProvider {
       body: { devices },
     });
 
-    assertYandexActionsDone(response);
+    assertYandexActionsDone(response, devices.map((device) => device.id));
   }
 }

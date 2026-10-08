@@ -10,22 +10,21 @@ interface YandexApiResponse {
 }
 
 interface YandexActionResult {
-  status?: string;
+  status: "DONE" | "ERROR";
   error_code?: string;
   error_message?: string;
 }
 
 interface YandexCapabilityActionResult {
-  type?: string;
+  type: string;
   state?: {
-    instance?: string;
+    instance: string;
     action_result?: YandexActionResult;
   };
 }
 
 interface YandexDeviceActionResult {
   id: string;
-  action_result?: YandexActionResult;
   capabilities?: YandexCapabilityActionResult[];
 }
 
@@ -50,8 +49,12 @@ function formatRequestId(response: YandexApiResponse | undefined): string {
   return response?.request_id ? ` (request_id: ${response.request_id})` : "";
 }
 
-function formatActionResult(result: YandexActionResult): string {
-  const code = result.error_code ?? result.status ?? "UNKNOWN";
+function formatActionResult(result: YandexActionResult | undefined): string {
+  if (!result) {
+    return "no action_result";
+  }
+
+  const code = result.error_code ?? result.status;
 
   return result.error_message ? `${code}: ${result.error_message}` : code;
 }
@@ -90,19 +93,23 @@ export async function requestYandexIot<T>(path: string, options: YandexIotReques
   return body as T;
 }
 
-export function assertYandexActionsDone(response: YandexDeviceActionsResponse): void {
+export function assertYandexActionsDone(response: YandexDeviceActionsResponse, deviceIds: string[]): void {
   const failures: string[] = [];
+  const devicesById = new Map((response.devices ?? []).map((device) => [device.id, device]));
 
-  for (const device of response.devices ?? []) {
-    if (device.action_result && device.action_result.status !== "DONE") {
-      failures.push(`${device.id}: ${formatActionResult(device.action_result)}`);
+  for (const deviceId of deviceIds) {
+    const device = devicesById.get(deviceId);
+
+    if (!device?.capabilities?.length) {
+      failures.push(`${deviceId}: no action result`);
+      continue;
     }
 
-    for (const capability of device.capabilities ?? []) {
+    for (const capability of device.capabilities) {
       const result = capability.state?.action_result;
 
-      if (result && result.status !== "DONE") {
-        failures.push(`${device.id} ${capability.type ?? "capability"}: ${formatActionResult(result)}`);
+      if (result?.status !== "DONE") {
+        failures.push(`${deviceId} ${capability.type}: ${formatActionResult(result)}`);
       }
     }
   }
