@@ -45,7 +45,7 @@ PE is not used, which is only acceptable for a non-conductive housing. If the tr
 ## Parts
 
 - Traffic light with three 220V lamps and a common return wire.
-- ESP32-C3 dev board with a 5V pin, for example ESP32-C3 SuperMini.
+- ESP32-C3 board with a 5V pin.
 - 4-channel 5V relay module with optocouplers, contacts rated for at least 250V AC 10A. Only 3 channels are used.
 - AC-DC 5V module with a USB-C output, 5V 3A.
 - USB-C to USB-C cable (short) from the AC-DC module to the ESP32-C3.
@@ -174,7 +174,27 @@ Open **Configuration → Matter** in the Tasmota web UI.
 2. Yandex adds the bridge and three lamps. Give the lamps clear names.
 3. Create a group named `Светофор` and put the three lamps into it. The code works with this group, not with the bridge device.
 4. In Tasmota, uncheck **Commissioning open** and press **Save**, so the device cannot be paired again by accident.
-5. Follow the [Yandex OAuth section in the README](../README.md#yandex-oauth), then run `npm run yandex:traffic-light-group` to get the lamp IDs for `.env`.
+5. Follow the [Yandex OAuth section in the README](../README.md#yandex-oauth) to get `YANDEX_REFRESH_TOKEN`.
+
+### Find the lamp IDs
+
+1. Run:
+
+   ```bash
+   npm run yandex:user-info
+   ```
+
+   It prints all your Yandex Smart Home devices as JSON.
+2. In the `devices` array, find the three lamps by their `name` and copy each lamp's `id`. Do not use the bridge device: it has its own `id`, but it does not switch the lamps.
+3. Put the IDs into `.env`:
+
+   ```
+   YANDEX_RED_DEVICE_ID=<id of the red lamp>
+   YANDEX_YELLOW_DEVICE_ID=<id of the yellow lamp>
+   YANDEX_GREEN_DEVICE_ID=<id of the green lamp>
+   ```
+
+If the lamps are already in the `Светофор` group, `npm run yandex:traffic-light-group` prints only their names and IDs, which is shorter than searching the full list.
 
 ## Old firmware
 
