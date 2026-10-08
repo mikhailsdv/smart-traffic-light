@@ -6,13 +6,17 @@ const delayMs = 3_000;
 
 export const cycleScript: TrafficLightScript = {
   name: "cycle",
-  async run(controller) {
-    while (true) {
+  async run(controller, signal) {
+    while (!signal.aborted) {
       for (const color of colors) {
+        if (signal.aborted) {
+          return;
+        }
+
         console.log(`Turning on ${color}`);
         await controller.setOnly(color);
         console.log(`Waiting ${delayMs}ms`);
-        await delay(delayMs);
+        await delay(delayMs, signal);
         console.log("Turning off");
         await controller.turnOff();
         console.log("Turned off");

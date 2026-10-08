@@ -1,12 +1,16 @@
 import "dotenv/config";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { SmartTrafficLightController } from "../controller/SmartTrafficLightController.js";
 import { createProvider, isProviderName, providerNames, type ProviderName } from "../providers/createProvider.js";
 import { trafficLightColors, type TrafficLightColor, type TrafficLightProvider, type TrafficLightState } from "../types.js";
+import { WebScriptRunner } from "./scriptRunner.js";
 import { trafficLightUi } from "./ui.js";
 
 const port = Number(process.env.PORT ?? 3_000);
 const providers = new Map<ProviderName, TrafficLightProvider>();
 const pendingStateReads = new Map<ProviderName, Promise<TrafficLightState>>();
+const webScriptNames = ["cycle", "happyBirthday"];
+const scriptRunner = new WebScriptRunner();
 const state: TrafficLightState = {
   red: false,
   yellow: false,
@@ -92,6 +96,37 @@ function parseProviderName(value: unknown): ProviderName {
   return toProviderName(value.provider);
 }
 
+function getStatus(): { lamps: TrafficLightState; script: string | null } {
+  return { lamps: state, script: scriptRunner.scriptName };
+}
+
+function parseScriptName(value: unknown): string {
+  const script = value && typeof value === "object" && "script" in value ? value.script : undefined;
+
+  if (typeof script !== "string" || !webScriptNames.includes(script)) {
+    throw new HttpError(400, `Script must be one of: ${webScriptNames.join(", ")}`);
+  }
+
+  return script;
+}
+
+async function handleScriptStart(request: IncomingMessage, response: ServerResponse): Promise<void> {
+  const body = await readJson(request);
+  const provider = getProvider(parseProviderName(body));
+
+  await scriptRunner.start(parseScriptName(body), provider);
+  sendJson(response, 200, getStatus());
+}
+
+async function handleScriptStop(request: IncomingMessage, response: ServerResponse): Promise<void> {
+  const provider = getProvider(parseProviderName(await readJson(request)));
+
+  await scriptRunner.stop();
+  await new SmartTrafficLightController(provider).turnOff();
+  Object.assign(state, { red: false, yellow: false, green: false });
+  sendJson(response, 200, getStatus());
+}
+
 async function readProviderState(name: ProviderName): Promise<TrafficLightState> {
   const provider = getProvider(name);
 
@@ -148,10 +183,12 @@ async function handleToggle(request: IncomingMessage, response: ServerResponse):
   const provider = getProvider(parseProviderName(body));
   const patch = parseStatePatch(body);
 
+  await scriptRunner.stop();
+
   if (provider.setState && isFullState(patch)) {
     await provider.setState(patch);
     Object.assign(state, patch);
-    sendJson(response, 200, state);
+    sendJson(response, 200, getStatus());
     return;
   }
 
@@ -166,7 +203,7 @@ async function handleToggle(request: IncomingMessage, response: ServerResponse):
     state[color] = enabled;
   }
 
-  sendJson(response, 200, state);
+  sendJson(response, 200, getStatus());
 }
 
 const server = createServer((request, response) => {
@@ -179,7 +216,18 @@ const server = createServer((request, response) => {
     }
 
     if (request.method === "GET" && url.pathname === "/status") {
-      sendJson(response, 200, await readProviderState(toProviderName(url.searchParams.get("provider"))));
+      await readProviderState(toProviderName(url.searchParams.get("provider")));
+      sendJson(response, 200, getStatus());
+      return;
+    }
+
+    if (request.method === "POST" && url.pathname === "/scripts/start") {
+      await handleScriptStart(request, response);
+      return;
+    }
+
+    if (request.method === "POST" && url.pathname === "/scripts/stop") {
+      await handleScriptStop(request, response);
       return;
     }
 

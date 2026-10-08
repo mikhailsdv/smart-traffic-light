@@ -20,7 +20,9 @@ export const trafficLightUi = `<!DOCTYPE html>
     .provider-switch button.active { background: #ffffff; color: #111111; box-shadow: 0 4px 14px rgba(0,0,0,0.2); }
     .actions { position: fixed; bottom: 18px; left: 16px; right: 16px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
     .actions button { min-width: 86px; padding: 15px 20px; border: none; border-radius: 999px; background: rgba(26,26,26,0.88); color: #d7d7d7; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,0.18); backdrop-filter: blur(10px); transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
-    .actions button:active { background: #ffffff; color: #111111; }
+    .actions button:active, .actions button.active { background: #ffffff; color: #111111; }
+    .actions button:disabled { opacity: 0.45; cursor: default; }
+    .actions .break { flex-basis: 100%; height: 0; }
   </style>
 </head>
 <body>
@@ -34,21 +36,28 @@ export const trafficLightUi = `<!DOCTYPE html>
     <button id="green" class="lamp green" onclick="clickLamp('green')"></button>
   </div>
   <div class="actions">
+    <button data-script="cycle" onclick="startScript('cycle')">Цикл</button>
+    <button data-script="happyBirthday" onclick="startScript('happyBirthday')">С днём рождения</button>
+    <button id="stop-script" onclick="stopScript()">Стоп</button>
+    <div class="break"></div>
     <button onclick="setAll(true)">Включить все</button>
     <button onclick="setAll(false)">Выключить все</button>
   </div>
   <script>
     let states = { red: false, yellow: false, green: false };
+    let runningScript = null;
     let provider = localStorage.getItem('traffic-light-provider') || 'tasmota';
     let stateVersion = 0;
     let pendingToggles = 0;
     const pollIntervalMs = 5000;
     function updateUI() {
-      for (const color in states) {
-        const element = document.getElementById(color);
-        if (states[color]) element.classList.add('active');
-        else element.classList.remove('active');
+      for (const color of ['red', 'yellow', 'green']) {
+        document.getElementById(color).classList.toggle('active', Boolean(states[color]));
       }
+      for (const button of document.querySelectorAll('[data-script]')) {
+        button.classList.toggle('active', button.dataset.script === runningScript);
+      }
+      document.getElementById('stop-script').disabled = !runningScript;
     }
     function updateProviderUI() {
       document.getElementById('provider-tasmota').classList.toggle('active', provider === 'tasmota');
@@ -63,7 +72,8 @@ export const trafficLightUi = `<!DOCTYPE html>
     }
     function applyState(data, version) {
       if (data.error || version !== stateVersion) return;
-      states = data;
+      states = data.lamps;
+      runningScript = data.script;
       updateUI();
     }
     async function refreshState() {
@@ -85,18 +95,24 @@ export const trafficLightUi = `<!DOCTYPE html>
       updateUI();
       pollState();
     };
-    function sendToggle(payload) {
+    function sendAction(path, payload) {
       const version = ++stateVersion;
       pendingToggles++;
-      fetch('/toggle', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ provider }, payload)) })
+      fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ provider }, payload)) })
       .then(res => res.json()).then(data => applyState(data, version)).catch(error => console.error(error))
       .finally(() => { pendingToggles--; });
     }
     function clickLamp(color) {
-      sendToggle({ [color]: !states[color] });
+      sendAction('/toggle', { [color]: !states[color] });
     }
     function setAll(enabled) {
-      sendToggle({ red: enabled, yellow: enabled, green: enabled });
+      sendAction('/toggle', { red: enabled, yellow: enabled, green: enabled });
+    }
+    function startScript(script) {
+      sendAction('/scripts/start', { script });
+    }
+    function stopScript() {
+      sendAction('/scripts/stop', {});
     }
   </script>
 </body>

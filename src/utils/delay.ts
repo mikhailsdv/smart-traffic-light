@@ -1,7 +1,19 @@
-export type Delay = (ms: number) => Promise<void>;
+export type Delay = (ms: number, signal?: AbortSignal) => Promise<void>;
 
-export const delay: Delay = (ms) => {
+export const delay: Delay = (ms, signal) => {
   return new Promise((resolve) => {
-    setTimeout(resolve, ms);
+    if (signal?.aborted) {
+      resolve();
+      return;
+    }
+
+    const finish = (): void => {
+      clearTimeout(timeout);
+      signal?.removeEventListener("abort", finish);
+      resolve();
+    };
+    const timeout = setTimeout(finish, ms);
+
+    signal?.addEventListener("abort", finish, { once: true });
   });
 };

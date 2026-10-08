@@ -18,5 +18,5 @@ export interface TrafficLightController {
 
 export interface TrafficLightScript {
   name: string;
-  run(controller: TrafficLightController): Promise<void>;
+  run(controller: TrafficLightController, signal: AbortSignal): Promise<void>;
 }

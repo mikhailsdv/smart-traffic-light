@@ -35,7 +35,7 @@ async function main(): Promise<void> {
   const controller = new SmartTrafficLightController(provider);
   const script = getTrafficLightScript(scriptName);
 
-  await script.run(controller);
+  await script.run(controller, new AbortController().signal);
 }
 
 main().catch((error: unknown) => {

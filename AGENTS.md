@@ -80,7 +80,7 @@ VPS production uses only `YandexProvider`. Keep Tasmota support for local LAN/de
 
 ## Scripts
 
-Scripts must implement `TrafficLightScript` and be registered in `src/scripts/index.ts`.
+Scripts must implement `TrafficLightScript` and be registered in `src/scripts/index.ts`. `run(controller, signal)` receives an `AbortSignal`; long-running scripts must stop when it is aborted and pass it to `delay(ms, signal)` so waits end early. The CLI passes a signal that is never aborted.
 
 The `cycle` script switches `red -> yellow -> green`, waits 3 seconds for each color, then awaits `controller.turnOff()` before moving to the next color.
 
@@ -95,6 +95,12 @@ The `telegram-hearts` script logs into a Telegram user account with `@mtcute/nod
 - `GET /`
 - `GET /status?provider=tasmota|yandex` (reads the real lamp state from the provider)
 - `POST /toggle` (requires `Content-Type: application/json`, otherwise `415`)
+- `POST /scripts/start` with `{ provider, script }`
+- `POST /scripts/stop` with `{ provider }` (stops the script and turns all lamps off)
+
+`/status`, `/toggle` and `/scripts/*` respond with `{ lamps: { red, yellow, green }, script: string | null }`.
+
+Scripts started from the UI run inside the web server through `WebScriptRunner` (`src/web/scriptRunner.ts`), one at a time. Only scripts listed in `webScriptNames` in `src/web/server.ts` can be started from the UI (`telegram-hearts` is excluded because it needs a Telegram login). Starting a script stops the previous one; any `/toggle` stops the running script before changing lamps.
 
 The UI has "Включить все" / "Выключить все" buttons that send all three lamps in one `/toggle` payload. When a payload contains all three lamps and the provider implements `setState(...)`, the server switches them with one `setState(...)` call so they change at the same time; partial payloads still use `setLight(...)` per lamp.
 
