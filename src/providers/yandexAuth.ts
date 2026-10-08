@@ -47,19 +47,14 @@ export function createYandexOAuthUrl(): string {
   return url.href;
 }
 
-export async function exchangeYandexCode(code: string): Promise<void> {
-  const body = new URLSearchParams({
-    grant_type: "authorization_code",
-    code,
-  });
-
+async function requestYandexToken(params: Record<string, string>): Promise<YandexTokenResponse> {
   const response = await fetch("https://oauth.yandex.ru/token", {
     method: "POST",
     headers: {
       Authorization: `Basic ${getYandexCredentials()}`,
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body,
+    body: new URLSearchParams(params),
     signal: AbortSignal.timeout(requestTimeoutMs),
   });
   const responseBody = await response.text();
@@ -68,7 +63,14 @@ export async function exchangeYandexCode(code: string): Promise<void> {
     throw new Error(`Yandex token request failed: ${response.status} ${response.statusText}\n${responseBody}`);
   }
 
-  cachedTokens = toStoredYandexTokens(JSON.parse(responseBody) as YandexTokenResponse);
+  return JSON.parse(responseBody) as YandexTokenResponse;
+}
+
+export async function exchangeYandexCode(code: string): Promise<void> {
+  cachedTokens = toStoredYandexTokens(await requestYandexToken({
+    grant_type: "authorization_code",
+    code,
+  }));
   await writeYandexTokens(cachedTokens);
 }
 
@@ -93,26 +95,10 @@ async function refreshYandexAccessToken(storedTokens: StoredYandexTokens): Promi
     throw new Error("Missing Yandex refresh token. Run npm run yandex:oauth-url and npm run yandex:exchange-code -- <code>");
   }
 
-  const body = new URLSearchParams({
+  const tokenResponse = await requestYandexToken({
     grant_type: "refresh_token",
     refresh_token: refreshToken,
   });
-  const response = await fetch("https://oauth.yandex.ru/token", {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${getYandexCredentials()}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body,
-    signal: AbortSignal.timeout(requestTimeoutMs),
-  });
-  const responseBody = await response.text();
-
-  if (!response.ok) {
-    throw new Error(`Yandex token request failed: ${response.status} ${response.statusText}\n${responseBody}`);
-  }
-
-  const tokenResponse = JSON.parse(responseBody) as YandexTokenResponse;
   const tokens = toStoredYandexTokens(tokenResponse, storedTokens);
 
   cachedTokens = tokens;
