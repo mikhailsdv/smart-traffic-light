@@ -1,5 +1,4 @@
 import { getRequiredEnv } from "../env.js";
-import { readYandexTokens, writeYandexTokens, type StoredYandexTokens } from "./yandexTokenStore.js";
 
 interface YandexTokenResponse {
   access_token: string;
@@ -7,10 +6,16 @@ interface YandexTokenResponse {
   expires_in?: number;
 }
 
+interface YandexTokens {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number;
+}
+
 const scopes = ["iot:view", "iot:control"];
 const requestTimeoutMs = 10_000;
 
-let cachedTokens: StoredYandexTokens | null = null;
+let cachedTokens: YandexTokens | null = null;
 let pendingRefresh: Promise<string> | null = null;
 
 function getYandexCredentials(): string {
@@ -21,20 +26,6 @@ function getYandexCredentials(): string {
 
 function getExpiresAt(expiresIn?: number): number {
   return Date.now() + (expiresIn ?? 3_600) * 1_000;
-}
-
-function toStoredYandexTokens(response: YandexTokenResponse, previousTokens: StoredYandexTokens = {}): StoredYandexTokens {
-  const refreshToken = response.refresh_token ?? previousTokens.refreshToken;
-  const tokens: StoredYandexTokens = {
-    accessToken: response.access_token,
-    expiresAt: getExpiresAt(response.expires_in),
-  };
-
-  if (refreshToken) {
-    tokens.refreshToken = refreshToken;
-  }
-
-  return tokens;
 }
 
 export function createYandexOAuthUrl(): string {
@@ -66,43 +57,43 @@ async function requestYandexToken(params: Record<string, string>): Promise<Yande
   return JSON.parse(responseBody) as YandexTokenResponse;
 }
 
-export async function exchangeYandexCode(code: string): Promise<void> {
-  cachedTokens = toStoredYandexTokens(await requestYandexToken({
+export async function exchangeYandexCode(code: string): Promise<string> {
+  const tokenResponse = await requestYandexToken({
     grant_type: "authorization_code",
     code,
-  }));
-  await writeYandexTokens(cachedTokens);
+  });
+
+  if (!tokenResponse.refresh_token) {
+    throw new Error("Yandex token response does not contain refresh_token");
+  }
+
+  return tokenResponse.refresh_token;
 }
 
 export async function getYandexAccessToken(forceRefresh = false): Promise<string> {
-  cachedTokens ??= await readYandexTokens();
-
-  if (!forceRefresh && cachedTokens.accessToken && cachedTokens.expiresAt && cachedTokens.expiresAt > Date.now() + 60_000) {
+  if (!forceRefresh && cachedTokens && cachedTokens.expiresAt > Date.now() + 60_000) {
     return cachedTokens.accessToken;
   }
 
-  pendingRefresh ??= refreshYandexAccessToken(cachedTokens).finally(() => {
+  pendingRefresh ??= refreshYandexAccessToken().finally(() => {
     pendingRefresh = null;
   });
 
   return pendingRefresh;
 }
 
-async function refreshYandexAccessToken(storedTokens: StoredYandexTokens): Promise<string> {
-  const refreshToken = storedTokens.refreshToken ?? process.env.YANDEX_REFRESH_TOKEN;
-
-  if (!refreshToken) {
-    throw new Error("Missing Yandex refresh token. Run npm run yandex:oauth-url and npm run yandex:exchange-code -- <code>");
-  }
-
+async function refreshYandexAccessToken(): Promise<string> {
+  const refreshToken = cachedTokens?.refreshToken ?? getRequiredEnv("YANDEX_REFRESH_TOKEN");
   const tokenResponse = await requestYandexToken({
     grant_type: "refresh_token",
     refresh_token: refreshToken,
   });
-  const tokens = toStoredYandexTokens(tokenResponse, storedTokens);
 
-  cachedTokens = tokens;
-  await writeYandexTokens(tokens);
+  cachedTokens = {
+    accessToken: tokenResponse.access_token,
+    refreshToken: tokenResponse.refresh_token ?? refreshToken,
+    expiresAt: getExpiresAt(tokenResponse.expires_in),
+  };
 
-  return tokenResponse.access_token;
+  return cachedTokens.accessToken;
 }

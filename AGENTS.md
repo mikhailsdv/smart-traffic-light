@@ -28,7 +28,7 @@ Main code lives in `src/`:
 - `npm run start:web` runs the compiled web UI server.
 - `npm run docker` runs `docker compose down && docker compose up --build -d`.
 - `npm run yandex:oauth-url` prints a Yandex OAuth authorization URL.
-- `npm run yandex:exchange-code -- <code>` exchanges an OAuth code for tokens.
+- `npm run yandex:exchange-code -- <code>` exchanges an OAuth code and prints `YANDEX_REFRESH_TOKEN=...` for `.env`.
 - `npm run yandex:user-info` calls `GET https://api.iot.yandex.net/v1.0/user/info`.
 - `npm run yandex:traffic-light-group` prints the `Светофор` group id and its lamp ids/names.
 
@@ -49,7 +49,7 @@ Current env variables:
 - `YANDEX_YELLOW_DEVICE_ID`
 - `YANDEX_GREEN_DEVICE_ID`
 
-Yandex tokens are stored in `.tokens/yandex.json` after OAuth exchange or refresh. `.tokens` is ignored by git. Do not print token values in summaries or logs. On VPS, `YANDEX_REFRESH_TOKEN` in `.env` is the source of truth; `.tokens` is only a local cache and should not be required as persistent container state.
+`YANDEX_REFRESH_TOKEN` in `.env` is the only persisted Yandex secret. Access tokens are never written to disk: each process exchanges the refresh token for an access token on first use and keeps it in memory. If Yandex returns a new refresh token, it is used for later refreshes within the same process only. Do not print token values in summaries or logs.
 
 Telegram userbot sessions are stored in `.sessions/telegram.session`. `.sessions` is ignored by git and mounted in Docker Compose. Do not commit Telegram session files.
 
@@ -63,7 +63,7 @@ Telegram userbot sessions are stored in `.sessions/telegram.session`. `.sessions
 
 `TasmotaProvider.setState(...)` sends all three relays in one `Backlog0 Power1 ...; Power2 ...; Power3 ...` command, so they switch at the same time. Plain `Backlog` adds a delay between commands; do not use it for lamp state changes.
 
-`YandexProvider` uses Yandex Smart Home API. It does not store a static access token in env; it obtains one via `getYandexAccessToken()` from `src/providers/yandexAuth.ts` on every request. `yandexAuth.ts` caches tokens in memory, refreshes them shortly before expiry, and shares one in-flight refresh between concurrent callers.
+`YandexProvider` uses Yandex Smart Home API. It does not store a static access token in env; it obtains one via `getYandexAccessToken()` from `src/providers/yandexAuth.ts` on every request. `yandexAuth.ts` keeps tokens in memory only, refreshes them shortly before expiry, and shares one in-flight refresh between concurrent callers.
 
 All Yandex IoT API calls go through `requestYandexIot(...)` in `src/providers/yandexApi.ts`. It adds the bearer token, forces a token refresh and retries once on `401`, and throws unless the HTTP status is OK and the top-level `status` is `"ok"`. `/v1.0/devices/actions` returns HTTP 200 even when a lamp fails, so `YandexProvider` also calls `assertYandexActionsDone(...)`, which throws when a sent device is missing from `devices` or any `devices[].capabilities[].state.action_result.status` is not `DONE`.
 
@@ -101,7 +101,7 @@ Before exposing the web UI beyond localhost, add authentication or bind it expli
 
 ## Known Sharp Edges
 
-- `dist/`, `node_modules/`, `.env`, and `.tokens` should not be committed.
+- `dist/`, `node_modules/`, and `.env` should not be committed.
 - The Docker default command starts the `cycle` script with Yandex, which can immediately control real lamps.
 - If files under `src/scripts/` are deleted or consolidated, keep `src/scripts/index.ts` in sync; stale imports break `npm run build`.
 - Avoid adding comments unless explicitly requested by the user.

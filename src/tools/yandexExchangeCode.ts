@@ -12,8 +12,10 @@ function getCode(argv: string[]): string {
 }
 
 async function main(): Promise<void> {
-  await exchangeYandexCode(getCode(process.argv.slice(2)));
-  console.log("Yandex tokens saved to .tokens/yandex.json");
+  const refreshToken = await exchangeYandexCode(getCode(process.argv.slice(2)));
+
+  console.log("Put this value into .env:");
+  console.log(`YANDEX_REFRESH_TOKEN=${refreshToken}`);
 }
 
 main().catch((error: unknown) => {
