@@ -61,11 +61,13 @@ Telegram userbot sessions are stored in `.sessions/telegram.session`. `.sessions
 - `yellow` -> `Power2`
 - `green` -> `Power3`
 
+`TasmotaProvider.setState(...)` sends all three relays in one `Backlog0 Power1 ...; Power2 ...; Power3 ...` command, so they switch at the same time. Plain `Backlog` adds a delay between commands; do not use it for lamp state changes.
+
 `YandexProvider` uses Yandex Smart Home API. It does not store a static access token in env; it obtains one via `getYandexAccessToken()` from `src/providers/yandexAuth.ts` on every request. `yandexAuth.ts` caches tokens in memory, refreshes them shortly before expiry, and shares one in-flight refresh between concurrent callers.
 
 All Yandex IoT API calls go through `requestYandexIot(...)` in `src/providers/yandexApi.ts`. It adds the bearer token, forces a token refresh and retries once on `401`, and throws unless the HTTP status is OK and the top-level `status` is `"ok"`. `/v1.0/devices/actions` returns HTTP 200 even when a lamp fails, so `YandexProvider` also calls `assertYandexActionsDone(...)`, which throws when a sent device is missing from `devices` or any `devices[].capabilities[].state.action_result.status` is not `DONE`.
 
-Providers implement `setLight(...)` and may implement optional `setState(...)`. `SmartTrafficLightController.set(...)` uses `setState(...)` when available; `YandexProvider` sends all three lamps in one `/devices/actions` request.
+Providers implement `setLight(...)` and may implement optional `setState(...)`. `SmartTrafficLightController.set(...)` uses `setState(...)` when available; `YandexProvider` sends all three lamps in one `/devices/actions` request, `TasmotaProvider` uses one `Backlog0` command.
 
 Provider names live in `providerNames` in `src/providers/createProvider.ts`; use `isProviderName(...)` instead of hardcoding the list.
 

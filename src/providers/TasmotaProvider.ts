@@ -1,5 +1,5 @@
 import { getRequiredEnv } from "../env.js";
-import type { TrafficLightColor, TrafficLightProvider } from "../types.js";
+import { trafficLightColors, type TrafficLightColor, type TrafficLightProvider, type TrafficLightState } from "../types.js";
 
 const defaultChannelByColor: Record<TrafficLightColor, string> = {
   red: "Power1",
@@ -8,6 +8,10 @@ const defaultChannelByColor: Record<TrafficLightColor, string> = {
 };
 
 const requestTimeoutMs = 5_000;
+
+function getPowerCommand(color: TrafficLightColor, enabled: boolean): string {
+  return `${defaultChannelByColor[color]} ${enabled ? "ON" : "OFF"}`;
+}
 
 export class TasmotaProvider implements TrafficLightProvider {
   private readonly baseUrl: string;
@@ -19,8 +23,16 @@ export class TasmotaProvider implements TrafficLightProvider {
   }
 
   async setLight(color: TrafficLightColor, enabled: boolean): Promise<void> {
-    const channel = defaultChannelByColor[color];
-    const command = `${channel} ${enabled ? "ON" : "OFF"}`;
+    await this.sendCommand(getPowerCommand(color, enabled));
+  }
+
+  async setState(state: TrafficLightState): Promise<void> {
+    const commands = trafficLightColors.map((color) => getPowerCommand(color, state[color]));
+
+    await this.sendCommand(`Backlog0 ${commands.join("; ")}`);
+  }
+
+  private async sendCommand(command: string): Promise<void> {
     const url = new URL("/cm", this.baseUrl);
 
     url.searchParams.set("cmnd", command);
