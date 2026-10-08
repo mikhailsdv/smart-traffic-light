@@ -18,9 +18,9 @@ export const trafficLightUi = `<!DOCTYPE html>
     .provider-switch { position: fixed; top: 18px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; padding: 5px; border-radius: 999px; background: rgba(26,26,26,0.88); box-shadow: 0 8px 24px rgba(0,0,0,0.18); backdrop-filter: blur(10px); }
     .provider-switch button { min-width: 86px; padding: 10px 16px; border: none; border-radius: 999px; background: transparent; color: #d7d7d7; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; }
     .provider-switch button.active { background: #ffffff; color: #111111; box-shadow: 0 4px 14px rgba(0,0,0,0.2); }
-    .all-switch { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; padding: 5px; border-radius: 999px; background: rgba(26,26,26,0.88); box-shadow: 0 8px 24px rgba(0,0,0,0.18); backdrop-filter: blur(10px); }
-    .all-switch button { min-width: 86px; padding: 10px 16px; border: none; border-radius: 999px; background: transparent; color: #d7d7d7; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
-    .all-switch button:active { background: #ffffff; color: #111111; }
+    .actions { position: fixed; bottom: 18px; left: 16px; right: 16px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+    .actions button { min-width: 86px; padding: 15px 20px; border: none; border-radius: 999px; background: rgba(26,26,26,0.88); color: #d7d7d7; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,0.18); backdrop-filter: blur(10px); transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+    .actions button:active { background: #ffffff; color: #111111; }
   </style>
 </head>
 <body>
@@ -33,7 +33,7 @@ export const trafficLightUi = `<!DOCTYPE html>
     <button id="yellow" class="lamp yellow" onclick="clickLamp('yellow')"></button>
     <button id="green" class="lamp green" onclick="clickLamp('green')"></button>
   </div>
-  <div class="all-switch">
+  <div class="actions">
     <button onclick="setAll(true)">Включить все</button>
     <button onclick="setAll(false)">Выключить все</button>
   </div>
