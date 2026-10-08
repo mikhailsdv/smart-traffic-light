@@ -40,16 +40,16 @@ function getState(pair: LampPair): TrafficLightState {
 
 export const happyBirthdayScript: TrafficLightScript = {
   name: "happyBirthday",
-  async run(controller) {
+  async run(controller, signal) {
     let previousPair: LampPair | null = null;
 
-    while (true) {
+    while (!signal.aborted) {
       const pair = getRandomPair(previousPair);
 
       console.log(`Turning on ${pair.join(" + ")}`);
       await controller.set(getState(pair));
       previousPair = pair;
-      await delay(delayMs);
+      await delay(delayMs, signal);
     }
   },
 };

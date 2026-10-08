@@ -12,11 +12,9 @@ npm install
 
 Create `.env` from `.env.example`.
 
-## Tasmota
+## Hardware
 
-Flash ESP32 with Tasmota using this installer:
-
-https://tasmota.github.io/install/
+Wiring diagram, parts list, Tasmota flashing and step-by-step build guide: [docs/hardware.md](docs/hardware.md).
 
 ## Usage
 
@@ -89,7 +87,7 @@ Authorization flow:
    ```bash
    npm run yandex:exchange-code -- <code>
    ```
-7. Tokens will be saved to `.tokens/yandex.json`. This directory is ignored by git.
+7. Copy the printed `YANDEX_REFRESH_TOKEN=...` line into `.env`.
 8. Check access:
    ```bash
    npm run yandex:user-info

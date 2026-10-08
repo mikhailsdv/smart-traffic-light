@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { getYandexAccessToken } from "../providers/yandexAuth.js";
+import { requestYandexIot } from "../providers/yandexApi.js";
 
 interface YandexGroup {
   id: string;
@@ -17,24 +17,8 @@ interface YandexUserInfo {
   devices: YandexDevice[];
 }
 
-async function getYandexUserInfo(): Promise<YandexUserInfo> {
-  const token = await getYandexAccessToken();
-  const response = await fetch("https://api.iot.yandex.net/v1.0/user/info", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  const body = await response.text();
-
-  if (!response.ok) {
-    throw new Error(`Yandex request failed: ${response.status} ${response.statusText}\n${body}`);
-  }
-
-  return JSON.parse(body) as YandexUserInfo;
-}
-
 async function main(): Promise<void> {
-  const userInfo = await getYandexUserInfo();
+  const userInfo = await requestYandexIot<YandexUserInfo>("/v1.0/user/info");
   const group = userInfo.groups.find((item) => item.name === "Светофор");
 
   if (!group) {

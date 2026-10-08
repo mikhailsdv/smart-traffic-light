@@ -2,7 +2,13 @@ import type { TrafficLightProvider } from "../types.js";
 import { TasmotaProvider } from "./TasmotaProvider.js";
 import { YandexProvider } from "./YandexProvider.js";
 
-export type ProviderName = "tasmota" | "yandex";
+export const providerNames = ["tasmota", "yandex"] as const;
+
+export type ProviderName = (typeof providerNames)[number];
+
+export function isProviderName(value: string): value is ProviderName {
+  return providerNames.includes(value as ProviderName);
+}
 
 export function createProvider(name: string): TrafficLightProvider {
   switch (name) {
