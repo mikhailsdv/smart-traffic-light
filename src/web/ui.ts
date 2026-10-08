@@ -50,6 +50,9 @@ export const trafficLightUi = `<!DOCTYPE html>
     let stateVersion = 0;
     let pendingToggles = 0;
     const pollIntervalMs = 5000;
+    const scriptPollIntervalMs = 1000;
+    let pollTimer = null;
+    let polling = false;
     function updateUI() {
       for (const color of ['red', 'yellow', 'green']) {
         document.getElementById(color).classList.toggle('active', Boolean(states[color]));
@@ -72,9 +75,11 @@ export const trafficLightUi = `<!DOCTYPE html>
     }
     function applyState(data, version) {
       if (data.error || version !== stateVersion) return;
+      const scriptChanged = data.script !== runningScript;
       states = data.lamps;
       runningScript = data.script;
       updateUI();
+      if (scriptChanged && !polling) schedulePoll();
     }
     async function refreshState() {
       const version = stateVersion;
@@ -86,9 +91,15 @@ export const trafficLightUi = `<!DOCTYPE html>
         console.error(error);
       }
     }
+    function schedulePoll() {
+      clearTimeout(pollTimer);
+      pollTimer = setTimeout(pollState, runningScript ? scriptPollIntervalMs : pollIntervalMs);
+    }
     async function pollState() {
+      polling = true;
       await refreshState();
-      setTimeout(pollState, pollIntervalMs);
+      polling = false;
+      schedulePoll();
     }
     window.onload = function() {
       updateProviderUI();

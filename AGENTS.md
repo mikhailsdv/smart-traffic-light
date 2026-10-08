@@ -100,13 +100,13 @@ The `telegram-hearts` script logs into a Telegram user account with `@mtcute/nod
 
 `/status`, `/toggle` and `/scripts/*` respond with `{ lamps: { red, yellow, green }, script: string | null }`.
 
-Scripts started from the UI run inside the web server through `WebScriptRunner` (`src/web/scriptRunner.ts`), one at a time. Only scripts listed in `webScriptNames` in `src/web/server.ts` can be started from the UI (`telegram-hearts` is excluded because it needs a Telegram login). Starting a script stops the previous one; any `/toggle` stops the running script before changing lamps.
+Scripts started from the UI run inside the web server through `WebScriptRunner` (`src/web/scriptRunner.ts`), one at a time. Only scripts listed in `webScriptNames` in `src/web/server.ts` can be started from the UI (`telegram-hearts` is excluded because it needs a Telegram login). Starting a script stops the previous one; any `/toggle` stops the running script before changing lamps. The script gets a provider wrapper that writes every successful `setLight`/`setState` into the server state, and `/status` returns that state without calling `getState()` while a script is running, so fast UI polling does not hit Tasmota or Yandex.
 
 The UI has "Включить все" / "Выключить все" buttons that send all three lamps in one `/toggle` payload. When a payload contains all three lamps and the provider implements `setState(...)`, the server switches them with one `setState(...)` call so they change at the same time; partial payloads still use `setLight(...)` per lamp.
 
 Providers may implement optional `getState()`. `TasmotaProvider` reads it with the `State` command, `YandexProvider` reads `GET /v1.0/devices/{id}` for each lamp. Both providers control the same physical lamps, so `/status` reads the real state from the selected provider and concurrent `/status` calls for the same provider share one read.
 
-The UI stores the selected provider in `localStorage`, sends it in `/status` and `/toggle`, polls `/status` every 5 seconds after the previous response arrives, and refreshes immediately when the provider is switched. Poll responses are ignored while a toggle is in flight or after the provider changed, so stale reads do not overwrite newer state.
+The UI stores the selected provider in `localStorage`, sends it in `/status` and `/toggle`, polls `/status` 5 seconds after the previous response arrives (1 second while a script is running; the timer is rescheduled when the running script changes and no poll is in flight), and refreshes immediately when the provider is switched. Poll responses are ignored while a toggle is in flight or after the provider changed, so stale reads do not overwrite newer state.
 
 Before exposing the web UI beyond localhost, add authentication or bind it explicitly to localhost. Basic auth was discussed as the preferred simple option.
 

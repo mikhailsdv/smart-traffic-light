@@ -110,11 +110,30 @@ function parseScriptName(value: unknown): string {
   return script;
 }
 
+function trackState(provider: TrafficLightProvider): TrafficLightProvider {
+  const setState = provider.setState?.bind(provider);
+  const tracked: TrafficLightProvider = {
+    async setLight(color, enabled) {
+      await provider.setLight(color, enabled);
+      state[color] = enabled;
+    },
+  };
+
+  if (setState) {
+    tracked.setState = async (nextState) => {
+      await setState(nextState);
+      Object.assign(state, nextState);
+    };
+  }
+
+  return tracked;
+}
+
 async function handleScriptStart(request: IncomingMessage, response: ServerResponse): Promise<void> {
   const body = await readJson(request);
   const provider = getProvider(parseProviderName(body));
 
-  await scriptRunner.start(parseScriptName(body), provider);
+  await scriptRunner.start(parseScriptName(body), trackState(provider));
   sendJson(response, 200, getStatus());
 }
 
@@ -130,7 +149,7 @@ async function handleScriptStop(request: IncomingMessage, response: ServerRespon
 async function readProviderState(name: ProviderName): Promise<TrafficLightState> {
   const provider = getProvider(name);
 
-  if (!provider.getState) {
+  if (!provider.getState || scriptRunner.scriptName) {
     return state;
   }
 
@@ -143,7 +162,11 @@ async function readProviderState(name: ProviderName): Promise<TrafficLightState>
     pendingStateReads.set(name, pending);
   }
 
-  Object.assign(state, await pending);
+  const lamps = await pending;
+
+  if (!scriptRunner.scriptName) {
+    Object.assign(state, lamps);
+  }
 
   return state;
 }
