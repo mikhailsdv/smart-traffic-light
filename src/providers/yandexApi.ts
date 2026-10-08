@@ -28,6 +28,23 @@ interface YandexDeviceActionResult {
   capabilities?: YandexCapabilityActionResult[];
 }
 
+export interface YandexDeviceStateResponse extends YandexApiResponse {
+  id: string;
+  capabilities?: {
+    type: string;
+    state?: {
+      instance: string;
+      value: unknown;
+    } | null;
+  }[];
+}
+
+export function getYandexOnOffState(device: YandexDeviceStateResponse): boolean {
+  const capability = device.capabilities?.find((item) => item.type === "devices.capabilities.on_off");
+
+  return capability?.state?.value === true;
+}
+
 export interface YandexDeviceActionsResponse extends YandexApiResponse {
   devices?: YandexDeviceActionResult[];
 }

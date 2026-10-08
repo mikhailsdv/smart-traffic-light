@@ -93,12 +93,14 @@ The `telegram-hearts` script logs into a Telegram user account with `@mtcute/nod
 `src/web/server.ts` is intentionally small and can switch between `TasmotaProvider` and `YandexProvider` from the UI. It serves:
 
 - `GET /`
-- `GET /status`
+- `GET /status?provider=tasmota|yandex` (reads the real lamp state from the provider)
 - `POST /toggle` (requires `Content-Type: application/json`, otherwise `415`)
 
 The UI has "Включить все" / "Выключить все" buttons that send all three lamps in one `/toggle` payload. When a payload contains all three lamps and the provider implements `setState(...)`, the server switches them with one `setState(...)` call so they change at the same time; partial payloads still use `setLight(...)` per lamp.
 
-The current server keeps state in memory. If devices are changed outside this process, `/status` may be stale. The UI stores the selected provider in `localStorage` and sends it in `/toggle` payloads.
+Providers may implement optional `getState()`. `TasmotaProvider` reads it with the `State` command, `YandexProvider` reads `GET /v1.0/devices/{id}` for each lamp. Both providers control the same physical lamps, so `/status` reads the real state from the selected provider and concurrent `/status` calls for the same provider share one read.
+
+The UI stores the selected provider in `localStorage`, sends it in `/status` and `/toggle`, polls `/status` every 5 seconds after the previous response arrives, and refreshes immediately when the provider is switched. Poll responses are ignored while a toggle is in flight or after the provider changed, so stale reads do not overwrite newer state.
 
 Before exposing the web UI beyond localhost, add authentication or bind it explicitly to localhost. Basic auth was discussed as the preferred simple option.
 

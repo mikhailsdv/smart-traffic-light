@@ -6,6 +6,7 @@ import { trafficLightUi } from "./ui.js";
 
 const port = Number(process.env.PORT ?? 3_000);
 const providers = new Map<ProviderName, TrafficLightProvider>();
+const pendingStateReads = new Map<ProviderName, Promise<TrafficLightState>>();
 const state: TrafficLightState = {
   red: false,
   yellow: false,
@@ -71,18 +72,45 @@ function getProvider(name: ProviderName): TrafficLightProvider {
   return provider;
 }
 
-function parseProviderName(value: unknown): ProviderName {
-  if (!value || typeof value !== "object" || Array.isArray(value) || !("provider" in value)) {
+function toProviderName(provider: unknown): ProviderName {
+  if (provider === undefined || provider === null) {
     return "tasmota";
   }
-
-  const provider = value.provider;
 
   if (typeof provider !== "string" || !isProviderName(provider)) {
     throw new HttpError(400, `Provider must be one of: ${providerNames.join(", ")}`);
   }
 
   return provider;
+}
+
+function parseProviderName(value: unknown): ProviderName {
+  if (!value || typeof value !== "object" || Array.isArray(value) || !("provider" in value)) {
+    return "tasmota";
+  }
+
+  return toProviderName(value.provider);
+}
+
+async function readProviderState(name: ProviderName): Promise<TrafficLightState> {
+  const provider = getProvider(name);
+
+  if (!provider.getState) {
+    return state;
+  }
+
+  let pending = pendingStateReads.get(name);
+
+  if (!pending) {
+    pending = provider.getState().finally(() => {
+      pendingStateReads.delete(name);
+    });
+    pendingStateReads.set(name, pending);
+  }
+
+  Object.assign(state, await pending);
+
+  return state;
 }
 
 function parseStatePatch(value: unknown): Partial<TrafficLightState> {
@@ -151,7 +179,7 @@ const server = createServer((request, response) => {
     }
 
     if (request.method === "GET" && url.pathname === "/status") {
-      sendJson(response, 200, state);
+      sendJson(response, 200, await readProviderState(toProviderName(url.searchParams.get("provider"))));
       return;
     }
 

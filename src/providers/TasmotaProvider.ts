@@ -32,7 +32,18 @@ export class TasmotaProvider implements TrafficLightProvider {
     await this.sendCommand(`Backlog0 ${commands.join("; ")}`);
   }
 
-  private async sendCommand(command: string): Promise<void> {
+  async getState(): Promise<TrafficLightState> {
+    const response = await this.sendCommand("State") as Record<string, unknown>;
+    const state = {} as TrafficLightState;
+
+    for (const color of trafficLightColors) {
+      state[color] = response[defaultChannelByColor[color].toUpperCase()] === "ON";
+    }
+
+    return state;
+  }
+
+  private async sendCommand(command: string): Promise<unknown> {
     const url = new URL("/cm", this.baseUrl);
 
     url.searchParams.set("cmnd", command);
@@ -42,5 +53,7 @@ export class TasmotaProvider implements TrafficLightProvider {
     if (!response.ok) {
       throw new Error(`Tasmota request failed: ${response.status} ${response.statusText}`);
     }
+
+    return response.json();
   }
 }

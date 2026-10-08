@@ -7,6 +7,7 @@ export type TrafficLightState = Record<TrafficLightColor, boolean>;
 export interface TrafficLightProvider {
   setLight(color: TrafficLightColor, enabled: boolean): Promise<void>;
   setState?(state: TrafficLightState): Promise<void>;
+  getState?(): Promise<TrafficLightState>;
 }
 
 export interface TrafficLightController {

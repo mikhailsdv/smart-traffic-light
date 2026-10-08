@@ -40,6 +40,9 @@ export const trafficLightUi = `<!DOCTYPE html>
   <script>
     let states = { red: false, yellow: false, green: false };
     let provider = localStorage.getItem('traffic-light-provider') || 'tasmota';
+    let stateVersion = 0;
+    let pendingToggles = 0;
+    const pollIntervalMs = 5000;
     function updateUI() {
       for (const color in states) {
         const element = document.getElementById(color);
@@ -55,14 +58,39 @@ export const trafficLightUi = `<!DOCTYPE html>
       provider = nextProvider;
       localStorage.setItem('traffic-light-provider', provider);
       updateProviderUI();
+      stateVersion++;
+      refreshState();
+    }
+    function applyState(data, version) {
+      if (data.error || version !== stateVersion) return;
+      states = data;
+      updateUI();
+    }
+    async function refreshState() {
+      const version = stateVersion;
+      try {
+        const res = await fetch('/status?provider=' + encodeURIComponent(provider));
+        const data = await res.json();
+        if (pendingToggles === 0) applyState(data, version);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    async function pollState() {
+      await refreshState();
+      setTimeout(pollState, pollIntervalMs);
     }
     window.onload = function() {
       updateProviderUI();
-      fetch('/status').then(res => res.json()).then(data => { states = data; updateUI(); });
+      updateUI();
+      pollState();
     };
     function sendToggle(payload) {
+      const version = ++stateVersion;
+      pendingToggles++;
       fetch('/toggle', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ provider }, payload)) })
-      .then(res => res.json()).then(data => { if (!data.error) { states = data; updateUI(); } });
+      .then(res => res.json()).then(data => applyState(data, version)).catch(error => console.error(error))
+      .finally(() => { pendingToggles--; });
     }
     function clickLamp(color) {
       sendToggle({ [color]: !states[color] });
@@ -70,9 +98,6 @@ export const trafficLightUi = `<!DOCTYPE html>
     function setAll(enabled) {
       sendToggle({ red: enabled, yellow: enabled, green: enabled });
     }
-    setInterval(() => {
-      fetch('/status').then(res => res.json()).then(data => { states = data; updateUI(); });
-    }, 1500);
   </script>
 </body>
 </html>`;
