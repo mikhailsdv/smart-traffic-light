@@ -15,6 +15,7 @@ Main code lives in `src/`:
 - `src/tools/` contains one-off CLI helpers, mostly for Yandex OAuth.
 - `src/utils/` contains small utilities. Keep utility types inline in the same utility file unless splitting is clearly useful.
 - `firmware/traffic-light-matter/traffic-light-matter.ino` is an old Arduino/Matter firmware sketch kept for reference.
+- `docs/hardware.md` is the hardware build guide: wiring, parts, Tasmota flashing and configuration. `docs/images/wiring.svg` is the wiring diagram; keep its labels in English and keep GPIO/relay mapping in sync with `TasmotaProvider`.
 
 ## Commands
 

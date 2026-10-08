@@ -12,11 +12,9 @@ npm install
 
 Create `.env` from `.env.example`.
 
-## Tasmota
+## Hardware
 
-Flash ESP32 with Tasmota using this installer:
-
-https://tasmota.github.io/install/
+Wiring diagram, parts list, Tasmota flashing and step-by-step build guide: [docs/hardware.md](docs/hardware.md).
 
 ## Usage
 

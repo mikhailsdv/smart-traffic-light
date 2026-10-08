@@ -1,0 +1,169 @@
+<svg viewBox="0 0 1220 740" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Smart traffic light wiring diagram">
+  <title>Smart traffic light wiring diagram</title>
+  <defs>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M20,0 H0 V20" fill="none" stroke="#dfe5e0" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <style>
+    .box { fill: #ffffff; stroke: #1d2422; stroke-width: 1.6; }
+    .cell { fill: #f8faf8; stroke: #c4ccc7; stroke-width: 1.2; }
+    .cell.off { stroke-dasharray: 4 3; }
+    .w { fill: none; stroke-width: 2.6; stroke-linejoin: round; stroke-linecap: round; }
+    .mains { stroke: #9c3b22; }
+    .common { stroke: #1d2422; stroke-width: 3; }
+    .v5 { stroke: #d07a10; }
+    .gnd { stroke: #3f4845; }
+    .sig { stroke: #1f62b8; }
+    .usb { stroke: #d07a10; stroke-width: 6; }
+    .r { stroke: #d8262f; } .y { stroke: #e2a400; } .g { stroke: #179a52; }
+    .thin { fill: none; stroke: #1d2422; stroke-width: 1.6; stroke-linecap: round; }
+    .thin.off { stroke: #69736f; }
+    .dot { fill: #1d2422; }
+    .pin { fill: #ffffff; stroke: #1d2422; stroke-width: 1.4; }
+    .screw { fill: #f8faf8; stroke: #1d2422; stroke-width: 1.4; }
+    .cap { fill: #1d2422; }
+    .housing { fill: #2a302e; stroke: #1d2422; stroke-width: 1.6; }
+    .lamp { stroke: #2a302e; stroke-width: 3; }
+    .t { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; fill: #1d2422; }
+    .t.m { fill: #69736f; }
+    .t.s { font-size: 9.5px; }
+    .t.h { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; font-size: 14px; font-weight: 700; }
+    .t.wl { font-size: 10.5px; paint-order: stroke; stroke: #f8faf8; stroke-width: 4px; }
+    .t.mains-label { fill: #9c3b22; }
+  </style>
+
+  <rect width="1220" height="740" fill="#f8faf8"/>
+  <rect width="1220" height="740" fill="url(#grid)"/>
+
+  <path class="w common" d="M230,435 H215 V60 H1165 V290"/>
+  <path class="w mains" d="M150,630 H200 V465 H230"/>
+  <path class="w mains" d="M150,655 H658 V600"/>
+  <path class="w mains" d="M270,495 H300 V240"/>
+  <path class="w mains" d="M718,560 V525 H380 V240"/>
+  <path class="w mains" d="M778,560 V500"/>
+  <path class="w mains" d="M838,560 V500"/>
+  <path class="w mains" d="M898,560 V500"/>
+  <path class="w r" d="M802,320 V130 H1085"/>
+  <path class="w y" d="M862,320 V210 H1085"/>
+  <path class="w g" d="M922,320 V290 H1085"/>
+  <path class="w usb" d="M430,195 H470"/>
+  <path class="w v5" d="M600,200 H675 V345 H690"/>
+  <path class="w gnd" d="M600,225 H660 V370 H690"/>
+  <path class="w sig" d="M600,250 H645 V395 H690"/>
+  <path class="w sig" d="M600,275 H630 V420 H690"/>
+  <path class="w sig" d="M600,300 H615 V445 H690"/>
+  <path class="w gnd" d="M150,680 H182" stroke-dasharray="5 4"/>
+  <rect class="cap" x="182" y="673" width="12" height="14" rx="3"/>
+
+  <text class="t wl m" x="520" y="52">common black return wire of all lamps</text>
+  <text class="t wl mains-label" x="420" y="649">wire B · 220V AC</text>
+  <text class="t wl mains-label" x="194" y="560" transform="rotate(-90 194 560)">wire A · 220V AC</text>
+  <text class="t wl m" x="200" y="702">PE (earth) — insulated, unused</text>
+  <text class="t wl" x="935" y="124">K1 NO → red</text>
+  <text class="t wl" x="935" y="204">K2 NO → yellow</text>
+  <text class="t wl" x="935" y="284">K3 NO → green</text>
+  <text class="t wl m" x="450" y="519">220V AC to PSU</text>
+  <text class="t s wl m" x="433" y="182">USB-C</text>
+
+  <text class="t h" x="30" y="595">220V plug</text>
+  <rect class="box" x="30" y="606" width="120" height="96" rx="8"/>
+  <text class="t m" x="42" y="634">3-core</text>
+  <text class="t m" x="42" y="650">cable</text>
+  <text class="t" x="138" y="634" text-anchor="end">A</text>
+  <text class="t" x="138" y="659" text-anchor="end">B</text>
+  <text class="t" x="138" y="684" text-anchor="end">PE</text>
+
+  <text class="t h" x="226" y="408">X1</text>
+  <text class="t s m" x="250" y="408">3 terminals</text>
+  <rect class="box" x="230" y="420" width="40" height="90" rx="4"/>
+  <circle class="screw" cx="250" cy="435" r="7"/>
+  <circle class="screw" cx="250" cy="465" r="7"/>
+  <circle class="screw" cx="250" cy="495" r="7"/>
+
+  <rect class="box" x="635" y="560" width="285" height="40" rx="4"/>
+  <circle class="screw" cx="658" cy="580" r="7"/>
+  <circle class="screw" cx="718" cy="580" r="7"/>
+  <circle class="screw" cx="778" cy="580" r="7"/>
+  <circle class="screw" cx="838" cy="580" r="7"/>
+  <circle class="screw" cx="898" cy="580" r="7"/>
+  <text class="t h" x="635" y="626">X2</text>
+  <text class="t s m" x="662" y="626">5 terminals: B in · PSU · COM K1 · K2 · K3</text>
+
+  <rect class="box" x="250" y="150" width="180" height="90" rx="10"/>
+  <text class="t h" x="264" y="178">AC-DC 5V module</text>
+  <text class="t m" x="264" y="198">220V AC → 5V · 3A</text>
+  <text class="t s m" x="264" y="216">inside the housing</text>
+  <circle class="pin" cx="300" cy="240" r="4"/>
+  <circle class="pin" cx="380" cy="240" r="4"/>
+
+  <rect class="box" x="470" y="140" width="130" height="200" rx="6"/>
+  <text class="t h" x="482" y="166">ESP32-C3</text>
+  <text class="t s m" x="482" y="182">Tasmota · Matter</text>
+  <text class="t" x="590" y="204" text-anchor="end">5V out</text>
+  <text class="t" x="590" y="229" text-anchor="end">GND</text>
+  <text class="t" x="590" y="254" text-anchor="end">GPIO10</text>
+  <text class="t" x="590" y="279" text-anchor="end">GPIO1</text>
+  <text class="t" x="590" y="304" text-anchor="end">GPIO0</text>
+  <circle class="pin" cx="600" cy="200" r="4"/>
+  <circle class="pin" cx="600" cy="225" r="4"/>
+  <circle class="pin" cx="600" cy="250" r="4"/>
+  <circle class="pin" cx="600" cy="275" r="4"/>
+  <circle class="pin" cx="600" cy="300" r="4"/>
+  <rect x="470" y="187" width="10" height="16" rx="2" fill="#d07a10"/>
+
+  <text class="t h" x="690" y="310">Relay module</text>
+  <text class="t s m" x="790" y="310">×4</text>
+  <rect class="box" x="690" y="320" width="320" height="180" rx="6"/>
+  <text class="t s" x="700" y="349">VCC</text>
+  <text class="t s" x="700" y="374">GND</text>
+  <text class="t s" x="700" y="399">IN1</text>
+  <text class="t s" x="700" y="424">IN2</text>
+  <text class="t s" x="700" y="449">IN3</text>
+  <text class="t s m" x="700" y="474">IN4</text>
+  <circle class="pin" cx="690" cy="345" r="4"/>
+  <circle class="pin" cx="690" cy="370" r="4"/>
+  <circle class="pin" cx="690" cy="395" r="4"/>
+  <circle class="pin" cx="690" cy="420" r="4"/>
+  <circle class="pin" cx="690" cy="445" r="4"/>
+  <circle class="pin" cx="690" cy="470" r="4" style="opacity:.5"/>
+
+  <g>
+    <rect class="cell" x="764" y="336" width="52" height="150" rx="4"/>
+    <text class="t" x="790" y="356" text-anchor="middle" font-weight="600">K1</text>
+    <path class="thin" d="M802,320 V392"/><circle class="dot" cx="802" cy="394" r="3"/>
+    <path class="thin" d="M778,500 V446 L796,404"/><circle class="dot" cx="778" cy="446" r="3"/>
+    <text class="t s m" x="806" y="378">NO</text><text class="t s m" x="782" y="478">COM</text>
+  </g>
+  <g>
+    <rect class="cell" x="824" y="336" width="52" height="150" rx="4"/>
+    <text class="t" x="850" y="356" text-anchor="middle" font-weight="600">K2</text>
+    <path class="thin" d="M862,320 V392"/><circle class="dot" cx="862" cy="394" r="3"/>
+    <path class="thin" d="M838,500 V446 L856,404"/><circle class="dot" cx="838" cy="446" r="3"/>
+    <text class="t s m" x="866" y="378">NO</text>
+  </g>
+  <g>
+    <rect class="cell" x="884" y="336" width="52" height="150" rx="4"/>
+    <text class="t" x="910" y="356" text-anchor="middle" font-weight="600">K3</text>
+    <path class="thin" d="M922,320 V392"/><circle class="dot" cx="922" cy="394" r="3"/>
+    <path class="thin" d="M898,500 V446 L916,404"/><circle class="dot" cx="898" cy="446" r="3"/>
+    <text class="t s m" x="926" y="378">NO</text>
+  </g>
+  <g>
+    <rect class="cell off" x="944" y="336" width="52" height="150" rx="4"/>
+    <text class="t m" x="970" y="356" text-anchor="middle" font-weight="600">K4</text>
+    <path class="thin off" d="M982,336 V392"/><circle cx="982" cy="394" r="3" fill="#69736f"/>
+    <path class="thin off" d="M958,486 V446 L976,404"/><circle cx="958" cy="446" r="3" fill="#69736f"/>
+    <text class="t s m" x="970" y="478" text-anchor="middle">unused</text>
+  </g>
+
+  <rect class="housing" x="1050" y="88" width="130" height="250" rx="18"/>
+  <circle class="lamp" cx="1115" cy="130" r="30" fill="#d8262f"/>
+  <circle class="lamp" cx="1115" cy="210" r="30" fill="#e2a400"/>
+  <circle class="lamp" cx="1115" cy="290" r="30" fill="#179a52"/>
+  <path d="M1165,89 V290 M1145,130 H1165 M1145,210 H1165 M1145,290 H1165" fill="none" stroke="#e9eeeb" stroke-width="3" stroke-linejoin="round"/>
+  <circle cx="1165" cy="130" r="4" fill="#e9eeeb"/>
+  <circle cx="1165" cy="210" r="4" fill="#e9eeeb"/>
+  <text class="t h" x="1050" y="364">Traffic light 220V</text>
+  <text class="t s m" x="1050" y="380">3 lamps, common return wire</text>
+</svg>
