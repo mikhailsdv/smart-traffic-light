@@ -3,9 +3,21 @@ export const trafficLightUi = `<!DOCTYPE html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#f3f3f0" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0e0e0f" media="(prefers-color-scheme: dark)">
+  <meta id="theme-color" name="theme-color" content="#f3f3f0">
   <title>Светофор</title>
+  <script>
+    const themeStorageKey = 'traffic-light-theme';
+    const systemDarkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    function getStoredTheme() {
+      try { return localStorage.getItem(themeStorageKey); } catch (error) { return null; }
+    }
+    function applyTheme(theme) {
+      document.documentElement.dataset.theme = theme;
+      const meta = document.getElementById('theme-color');
+      if (meta) meta.content = theme === 'dark' ? '#0e0e0f' : '#f3f3f0';
+    }
+    applyTheme(getStoredTheme() || (systemDarkQuery.matches ? 'dark' : 'light'));
+  </script>
   <style>
     :root {
       --bg: #f3f3f0;
@@ -28,33 +40,38 @@ export const trafficLightUi = `<!DOCTYPE html>
       --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       color-scheme: light;
     }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #0e0e0f;
-        --card: #1c1c1e;
-        --card-border: rgba(255,255,255,0.06);
-        --text: #f2f2f2;
-        --muted: #8e8e93;
-        --housing: #050505;
-        --housing-edge: #232323;
-        --switch-bg: rgba(44,44,46,0.92);
-        --active-card: #f2f2f2;
-        --active-text: #111111;
-        --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
-        color-scheme: dark;
-      }
+    :root[data-theme="dark"] {
+      --bg: #0e0e0f;
+      --card: #1c1c1e;
+      --card-border: rgba(255,255,255,0.06);
+      --text: #f2f2f2;
+      --muted: #8e8e93;
+      --housing: #050505;
+      --housing-edge: #232323;
+      --switch-bg: rgba(44,44,46,0.92);
+      --active-card: #f2f2f2;
+      --active-text: #111111;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+      color-scheme: dark;
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--font); -webkit-font-smoothing: antialiased; }
     button { font-family: inherit; -webkit-tap-highlight-color: transparent; }
     .page { max-width: 440px; min-height: 100vh; min-height: 100dvh; margin: 0 auto; padding: 16px 16px max(20px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 18px; }
 
-    .header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
     .title { margin: 0; font-size: 22px; font-weight: 750; letter-spacing: -0.02em; }
-    .mode { margin-top: 3px; display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
-    .mode-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); opacity: 0.6; }
+    .mode { flex-basis: 100%; min-width: 0; display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+    .mode-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); opacity: 0.6; }
     .mode.running { color: var(--text); font-weight: 600; }
     .mode.running .mode-dot { background: var(--red); opacity: 1; animation: pulse 1.4s ease-in-out infinite; }
+    .header-controls { display: flex; align-items: center; gap: 8px; }
+    .theme-toggle { flex: none; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; border: none; border-radius: 50%; background: var(--switch-bg); color: #ffffff; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,0.16); transition: transform 0.12s ease; }
+    .theme-toggle:active { transform: scale(0.92); }
+    .theme-toggle svg { width: 19px; height: 19px; }
+    .theme-toggle .icon-sun { display: none; }
+    :root[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+    :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
     .provider-switch { display: flex; gap: 3px; padding: 4px; border-radius: 999px; background: var(--switch-bg); box-shadow: 0 6px 18px rgba(0,0,0,0.16); }
     .provider-switch button { padding: 8px 13px; border: none; border-radius: 999px; background: transparent; color: #cfcfcf; font-size: 13px; font-weight: 650; cursor: pointer; transition: background 0.2s ease, color 0.2s ease; }
     .provider-switch button.active { background: #ffffff; color: #111111; box-shadow: 0 3px 10px rgba(0,0,0,0.2); }
@@ -118,6 +135,12 @@ export const trafficLightUi = `<!DOCTYPE html>
     .dots.on i:nth-child(3) { color: var(--green); }
     .dots.off i { background: var(--muted); opacity: 0.35; }
 
+    @media (max-width: 380px) {
+      .title { font-size: 20px; }
+      .header-controls { gap: 6px; }
+      .provider-switch button { padding: 7px 10px; }
+      .theme-toggle { width: 36px; height: 36px; }
+    }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
     @keyframes mini-cycle { 0% { opacity: 1; } 33.333% { opacity: 0.25; } }
     @keyframes mini-pairs { 0% { opacity: 0.25; } 33.333% { opacity: 1; } }
@@ -127,14 +150,18 @@ export const trafficLightUi = `<!DOCTYPE html>
 <body>
   <main class="page">
     <header class="header">
-      <div>
-        <h1 class="title">Светофор</h1>
-        <div id="mode" class="mode"><span class="mode-dot"></span><span id="mode-text">Ручное управление</span></div>
+      <h1 class="title">Светофор</h1>
+      <div class="header-controls">
+        <div class="provider-switch">
+          <button id="provider-tasmota" onclick="selectProvider('tasmota')">Tasmota</button>
+          <button id="provider-yandex" onclick="selectProvider('yandex')">Yandex</button>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Переключить тему" title="Переключить тему">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="currentColor" stroke="none"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>
+        </button>
       </div>
-      <div class="provider-switch">
-        <button id="provider-tasmota" onclick="selectProvider('tasmota')">Tasmota</button>
-        <button id="provider-yandex" onclick="selectProvider('yandex')">Yandex</button>
-      </div>
+      <div id="mode" class="mode"><span class="mode-dot"></span><span id="mode-text">Ручное управление</span></div>
     </header>
 
     <section class="stage">
@@ -204,6 +231,14 @@ export const trafficLightUi = `<!DOCTYPE html>
         ? 'Нажатие на лампу остановит сценарий'
         : 'Нажмите на лампу, чтобы переключить её';
     }
+    function toggleTheme() {
+      const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      applyTheme(theme);
+      try { localStorage.setItem(themeStorageKey, theme); } catch (error) { console.error(error); }
+    }
+    systemDarkQuery.addEventListener('change', (event) => {
+      if (!getStoredTheme()) applyTheme(event.matches ? 'dark' : 'light');
+    });
     function updateProviderUI() {
       document.getElementById('provider-tasmota').classList.toggle('active', provider === 'tasmota');
       document.getElementById('provider-yandex').classList.toggle('active', provider === 'yandex');
@@ -244,6 +279,7 @@ export const trafficLightUi = `<!DOCTYPE html>
       schedulePoll();
     }
     window.onload = function() {
+      applyTheme(document.documentElement.dataset.theme);
       updateProviderUI();
       updateUI();
       pollState();
