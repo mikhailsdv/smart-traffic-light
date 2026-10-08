@@ -111,10 +111,21 @@ function parseStatePatch(value: unknown): Partial<TrafficLightState> {
   return patch;
 }
 
+function isFullState(patch: Partial<TrafficLightState>): patch is TrafficLightState {
+  return trafficLightColors.every((color) => patch[color] !== undefined);
+}
+
 async function handleToggle(request: IncomingMessage, response: ServerResponse): Promise<void> {
   const body = await readJson(request);
   const provider = getProvider(parseProviderName(body));
   const patch = parseStatePatch(body);
+
+  if (provider.setState && isFullState(patch)) {
+    await provider.setState(patch);
+    Object.assign(state, patch);
+    sendJson(response, 200, state);
+    return;
+  }
 
   for (const color of trafficLightColors) {
     const enabled = patch[color];

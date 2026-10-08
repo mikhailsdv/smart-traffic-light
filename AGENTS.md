@@ -96,6 +96,8 @@ The `telegram-hearts` script logs into a Telegram user account with `@mtcute/nod
 - `GET /status`
 - `POST /toggle` (requires `Content-Type: application/json`, otherwise `415`)
 
+The UI has "Включить все" / "Выключить все" buttons that send all three lamps in one `/toggle` payload. When a payload contains all three lamps and the provider implements `setState(...)`, the server switches them with one `setState(...)` call so they change at the same time; partial payloads still use `setLight(...)` per lamp.
+
 The current server keeps state in memory. If devices are changed outside this process, `/status` may be stale. The UI stores the selected provider in `localStorage` and sends it in `/toggle` payloads.
 
 Before exposing the web UI beyond localhost, add authentication or bind it explicitly to localhost. Basic auth was discussed as the preferred simple option.
