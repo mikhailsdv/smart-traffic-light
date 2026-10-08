@@ -166,14 +166,15 @@ Open **Configuration → Matter** in the Tasmota web UI.
    | Green | Light 0 OnOff | 3 |
 
    If an endpoint is missing, add it with **+ Add endpoint**. Press **Save** under the endpoint list.
-4. Check **Commissioning open** and press **Save** in the Matter block. The pairing QR code appears on the Tasmota main page.
+4. Open commissioning: check **Commissioning open** and press **Save** in the Matter block, or run `MtrJoin 1` in the console. Commissioning is also open automatically for 10 minutes after every restart, and closes on its own after 10 minutes.
+5. While commissioning is open, the Tasmota main page shows the pairing QR code and the numeric manual pairing code.
 
 ### Add the lamps to Yandex
 
-1. In the Yandex Smart Home app, add a new Matter device and scan the QR code from the Tasmota main page.
+1. In the Yandex Smart Home app, add a new Matter device and scan the QR code from the Tasmota main page. If scanning does not work, enter the manual pairing code instead.
 2. Yandex adds the bridge and three lamps. Give the lamps clear names.
 3. Create a group named `Светофор` and put the three lamps into it. The code works with this group, not with the bridge device.
-4. In Tasmota, uncheck **Commissioning open** and press **Save**, so the device cannot be paired again by accident.
+4. To close commissioning right away instead of waiting 10 minutes, uncheck **Commissioning open** and press **Save**, or run `MtrJoin 0`.
 5. Follow the [Yandex OAuth section in the README](../README.md#yandex-oauth) to get `YANDEX_REFRESH_TOKEN`.
 
 ### Find the lamp IDs
