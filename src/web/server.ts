@@ -9,7 +9,7 @@ import { trafficLightUi } from "./ui.js";
 const port = Number(process.env.PORT ?? 3_000);
 const providers = new Map<ProviderName, TrafficLightProvider>();
 const pendingStateReads = new Map<ProviderName, Promise<TrafficLightState>>();
-const webScriptNames = ["cycle", "happyBirthday"];
+const webScriptNames = ["cycle", "happyBirthday", "traffic"];
 const scriptRunner = new WebScriptRunner();
 const state: TrafficLightState = {
   red: false,

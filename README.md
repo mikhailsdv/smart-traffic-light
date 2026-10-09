@@ -36,6 +36,12 @@ Run Telegram heart listener locally:
 npm run dev -- --script telegram-hearts --provider yandex
 ```
 
+Run traffic mode locally (set `TRAFFIC_REGION_ID` in `.env`, for example `162` for Almaty):
+
+```bash
+npm run dev -- --script traffic --provider yandex
+```
+
 Run Happy Birthday mode locally:
 
 ```bash

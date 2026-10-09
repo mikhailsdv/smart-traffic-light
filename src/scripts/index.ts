@@ -1,12 +1,14 @@
 import { cycleScript } from "./cycle.js";
 import { happyBirthdayScript } from "./happyBirthday.js";
 import { telegramHeartsScript } from "./telegramHearts.js";
+import { trafficScript } from "./traffic.js";
 import type { TrafficLightScript } from "../types.js";
 
 export const trafficLightScripts: TrafficLightScript[] = [
   cycleScript,
   happyBirthdayScript,
   telegramHeartsScript,
+  trafficScript,
 ];
 
 export function getTrafficLightScript(name: string): TrafficLightScript {

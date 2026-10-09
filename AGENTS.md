@@ -23,6 +23,7 @@ Main code lives in `src/`:
 - `npm run dev -- --script cycle --provider yandex` runs the same script through Yandex Smart Home.
 - `npm run dev -- --script happyBirthday --provider yandex` runs random two-lamp pairs.
 - `npm run dev -- --script telegram-hearts --provider yandex` listens to Telegram heart commands.
+- `npm run dev -- --script traffic --provider yandex` shows the city traffic level.
 - `npm run build` compiles with `tsc`.
 - `npm run start -- --script cycle --provider yandex` runs compiled CLI code with the production provider.
 - `npm run dev:web` starts the web UI server.
@@ -49,6 +50,7 @@ Current env variables:
 - `YANDEX_RED_DEVICE_ID`
 - `YANDEX_YELLOW_DEVICE_ID`
 - `YANDEX_GREEN_DEVICE_ID`
+- `TRAFFIC_REGION_ID` (Yandex region id for the `traffic` script; Almaty is `162`, Moscow is `213`)
 
 `YANDEX_REFRESH_TOKEN` in `.env` is the only persisted Yandex secret. Access tokens are never written to disk: each process exchanges the refresh token for an access token on first use and keeps it in memory. If Yandex returns a new refresh token, it is used for later refreshes within the same process only. Do not print token values in summaries or logs.
 
@@ -86,6 +88,8 @@ The `cycle` script switches `red -> yellow -> green`, waits 3 seconds for each c
 
 The `happyBirthday` script switches every 3 seconds between random two-lamp pairs and avoids repeating the same pair twice in a row. It uses `controller.set(...)`, not `turnOff()`, so transition requests directly update the three lamp states.
 
+The `traffic` script reads the Yandex traffic level (0–10) for `TRAFFIC_REGION_ID` every 5 minutes from the unofficial `https://export.yandex.ru/bar/reginfo.xml?region=<id>` endpoint (`src/traffic/yandexTraffic.ts`) and lights one lamp: 0–3 green, 4–6 yellow, 7–10 red. If the request fails or the region has no traffic data, it turns all lamps off and retries every minute. The endpoint is not an official API and may change or disappear.
+
 The `telegram-hearts` script logs into a Telegram user account with `@mtcute/node`, prints QR login codes with `qrcode`, listens to `TELEGRAM_CHAT_ID`, and maps `❤️`, `💛`, `💚` to `red`, `yellow`, `green`. Regular heart messages and animated heart/dice messages blink the selected lamp 3 times. New heart commands cancel the previous blink sequence.
 
 ## Web UI
@@ -102,7 +106,7 @@ The `telegram-hearts` script logs into a Telegram user account with `@mtcute/nod
 
 Scripts started from the UI run inside the web server through `WebScriptRunner` (`src/web/scriptRunner.ts`), one at a time. Only scripts listed in `webScriptNames` in `src/web/server.ts` can be started from the UI (`telegram-hearts` is excluded because it needs a Telegram login). Starting a script stops the previous one; any `/toggle` stops the running script before changing lamps. The script gets a provider wrapper that writes every successful `setLight`/`setState` into the server state, and `/status` returns that state without calling `getState()` while a script is running, so fast UI polling does not hit Tasmota or Yandex.
 
-The UI is split into a header (title, current mode, provider switch), the traffic light, a "Сценарии" section (scenario cards with animated mini traffic lights and a red stop button) and a "Все лампы" section ("Включить" / "Выключить", which send all three lamps in one `/toggle` payload). The header has a theme toggle: without a stored choice the page follows the system light/dark theme; a manual choice is stored in `localStorage` (`traffic-light-theme`) and applied by an inline script in `<head>` to avoid a theme flash. When a payload contains all three lamps and the provider implements `setState(...)`, the server switches them with one `setState(...)` call so they change at the same time; partial payloads still use `setLight(...)` per lamp.
+The UI is split into a header (title, current mode, provider switch), the traffic light, a "Сценарии" section (a horizontally scrollable row of scenario cards with animated mini traffic lights, and a red stop button) and a "Все лампы" section ("Включить" / "Выключить", which send all three lamps in one `/toggle` payload). The header has a theme toggle: without a stored choice the page follows the system light/dark theme; a manual choice is stored in `localStorage` (`traffic-light-theme`) and applied by an inline script in `<head>` to avoid a theme flash. When a payload contains all three lamps and the provider implements `setState(...)`, the server switches them with one `setState(...)` call so they change at the same time; partial payloads still use `setLight(...)` per lamp.
 
 Providers may implement optional `getState()`. `TasmotaProvider` reads it with the `State` command, `YandexProvider` reads `GET /v1.0/devices/{id}` for each lamp. Both providers control the same physical lamps, so `/status` reads the real state from the selected provider and concurrent `/status` calls for the same provider share one read.
 
