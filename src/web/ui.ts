@@ -91,6 +91,9 @@ export const trafficLightUi = `<!DOCTYPE html>
     .section { display: flex; flex-direction: column; gap: 10px; }
     .section-title { margin: 0 2px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .scenario-list { display: flex; gap: 10px; margin: -10px -16px; padding: 10px 16px 14px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 16px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .scenario-list::-webkit-scrollbar { display: none; }
+    .scenario-list .scenario { flex: 0 0 156px; scroll-snap-align: start; }
 
     .scenario { display: flex; align-items: flex-start; gap: 12px; padding: 14px; min-height: 92px; border: 1px solid var(--card-border); border-radius: 20px; background: var(--card); color: var(--text); text-align: left; cursor: pointer; box-shadow: var(--shadow); transition: background 0.2s ease, color 0.2s ease, transform 0.12s ease; }
     .scenario:active { transform: scale(0.97); }
@@ -114,6 +117,7 @@ export const trafficLightUi = `<!DOCTYPE html>
     .scenario.active .mini-cycle i:nth-child(2) { animation-delay: -6s; }
     .scenario.active .mini-cycle i:nth-child(3) { animation-delay: -3s; }
     .scenario.active .mini-pairs i { animation: mini-pairs 3.6s steps(1) infinite; }
+    .scenario.active .mini-traffic i.lit { animation: pulse 2s ease-in-out infinite; }
     .scenario.active .mini-pairs i:nth-child(1) { animation-delay: -2.4s; }
     .scenario.active .mini-pairs i:nth-child(2) { animation-delay: -1.2s; }
 
@@ -175,7 +179,7 @@ export const trafficLightUi = `<!DOCTYPE html>
 
     <section class="section">
       <h2 class="section-title">Сценарии</h2>
-      <div class="grid">
+      <div class="scenario-list">
         <button class="scenario" data-script="cycle" onclick="startScript('cycle')">
           <span class="mini mini-cycle"><i class="lit"></i><i></i><i></i></span>
           <span class="scenario-text">
@@ -189,6 +193,14 @@ export const trafficLightUi = `<!DOCTYPE html>
           <span class="scenario-text">
             <span class="scenario-name">С днём рождения</span>
             <span class="scenario-desc">Случайные пары ламп</span>
+            <span class="badge">Идёт</span>
+          </span>
+        </button>
+        <button class="scenario" data-script="traffic" onclick="startScript('traffic')">
+          <span class="mini mini-traffic"><i></i><i></i><i class="lit"></i></span>
+          <span class="scenario-text">
+            <span class="scenario-name">Пробки</span>
+            <span class="scenario-desc">Цвет по баллам Яндекс Пробок</span>
             <span class="badge">Идёт</span>
           </span>
         </button>
@@ -212,7 +224,7 @@ export const trafficLightUi = `<!DOCTYPE html>
     let pendingToggles = 0;
     const pollIntervalMs = 5000;
     const scriptPollIntervalMs = 1000;
-    const scriptTitles = { cycle: 'Цикл', happyBirthday: 'С днём рождения' };
+    const scriptTitles = { cycle: 'Цикл', happyBirthday: 'С днём рождения', traffic: 'Пробки' };
     let pollTimer = null;
     let polling = false;
     function updateUI() {
@@ -256,6 +268,10 @@ export const trafficLightUi = `<!DOCTYPE html>
       states = data.lamps;
       runningScript = data.script;
       updateUI();
+      if (scriptChanged && runningScript) {
+        const card = document.querySelector('[data-script="' + runningScript + '"]');
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      }
       if (scriptChanged && !polling) schedulePoll();
     }
     async function refreshState() {
