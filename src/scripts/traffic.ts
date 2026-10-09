@@ -1,10 +1,7 @@
 import { getRequiredEnv } from "../env.js";
 import { getYandexTrafficInfo } from "../traffic/yandexTraffic.js";
-import type { TrafficLightColor, TrafficLightScript } from "../types.js";
-import { delay } from "../utils/delay.js";
-
-const pollIntervalMs = 5 * 60_000;
-const retryIntervalMs = 60_000;
+import type { TrafficLightColor } from "../types.js";
+import { createIndicatorScript } from "./createIndicatorScript.js";
 
 function getColorByTrafficLevel(level: number): TrafficLightColor {
   if (level <= 3) {
@@ -18,35 +15,20 @@ function getColorByTrafficLevel(level: number): TrafficLightColor {
   return "red";
 }
 
-export const trafficScript: TrafficLightScript = {
+export const trafficScript = createIndicatorScript({
   name: "traffic",
-  async run(controller, signal) {
+  pollIntervalMs: 5 * 60_000,
+  retryIntervalMs: 60_000,
+  createReader() {
     const regionId = getRequiredEnv("TRAFFIC_REGION_ID");
 
-    while (!signal.aborted) {
-      try {
-        const traffic = await getYandexTrafficInfo(regionId);
-        const color = getColorByTrafficLevel(traffic.level);
+    return async () => {
+      const traffic = await getYandexTrafficInfo(regionId);
 
-        if (signal.aborted) {
-          return;
-        }
-
-        console.log(`Traffic ${traffic.level}/10 at ${traffic.time ?? "?"} (${traffic.hint ?? "no hint"}) -> ${color}`);
-        await controller.setOnly(color);
-        await delay(pollIntervalMs, signal);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-
-        console.error(`Traffic update failed: ${message}`);
-
-        if (signal.aborted) {
-          return;
-        }
-
-        await controller.turnOff();
-        await delay(retryIntervalMs, signal);
-      }
-    }
+      return {
+        color: getColorByTrafficLevel(traffic.level),
+        description: `Traffic ${traffic.level}/10 at ${traffic.time ?? "?"} (${traffic.hint ?? "no hint"})`,
+      };
+    };
   },
-};
+});

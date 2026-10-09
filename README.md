@@ -42,6 +42,12 @@ Run traffic mode locally (set `TRAFFIC_REGION_ID` in `.env`, for example `162` f
 npm run dev -- --script traffic --provider yandex
 ```
 
+Run air quality mode locally (set `AIR_QUALITY_CITY` and `WAQI_TOKEN` in `.env`; get a free token at https://aqicn.org/data-platform/token/):
+
+```bash
+npm run dev -- --script airQuality --provider yandex
+```
+
 Run Happy Birthday mode locally:
 
 ```bash

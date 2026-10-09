@@ -24,6 +24,7 @@ Main code lives in `src/`:
 - `npm run dev -- --script happyBirthday --provider yandex` runs random two-lamp pairs.
 - `npm run dev -- --script telegram-hearts --provider yandex` listens to Telegram heart commands.
 - `npm run dev -- --script traffic --provider yandex` shows the city traffic level.
+- `npm run dev -- --script airQuality --provider yandex` shows the city air quality.
 - `npm run build` compiles with `tsc`.
 - `npm run start -- --script cycle --provider yandex` runs compiled CLI code with the production provider.
 - `npm run dev:web` starts the web UI server.
@@ -51,6 +52,8 @@ Current env variables:
 - `YANDEX_YELLOW_DEVICE_ID`
 - `YANDEX_GREEN_DEVICE_ID`
 - `TRAFFIC_REGION_ID` (Yandex region id for the `traffic` script; Almaty is `162`, Moscow is `213`)
+- `AIR_QUALITY_CITY` (WAQI city or station for the `airQuality` script: `almaty`, `geo:<lat>;<lon>` or `@<station id>`)
+- `WAQI_TOKEN` (free token from https://aqicn.org/data-platform/token/; it is sent in the request URL, so do not log request URLs)
 
 `YANDEX_REFRESH_TOKEN` in `.env` is the only persisted Yandex secret. Access tokens are never written to disk: each process exchanges the refresh token for an access token on first use and keeps it in memory. If Yandex returns a new refresh token, it is used for later refreshes within the same process only. Do not print token values in summaries or logs.
 
@@ -88,7 +91,11 @@ The `cycle` script switches `red -> yellow -> green`, waits 3 seconds for each c
 
 The `happyBirthday` script switches every 3 seconds between random two-lamp pairs and avoids repeating the same pair twice in a row. It uses `controller.set(...)`, not `turnOff()`, so transition requests directly update the three lamp states.
 
+Indicator scripts (`traffic`, `airQuality`) are built with `createIndicatorScript(...)` from `src/scripts/createIndicatorScript.ts`. `createReader()` runs once at start (read env there so missing variables fail immediately); the returned reader is polled, its color is shown with `controller.setOnly(...)`, and on any error all lamps are turned off and the reader is retried after `retryIntervalMs`.
+
 The `traffic` script reads the Yandex traffic level (0–10) for `TRAFFIC_REGION_ID` every 5 minutes from the unofficial `https://export.yandex.ru/bar/reginfo.xml?region=<id>` endpoint (`src/traffic/yandexTraffic.ts`) and lights one lamp: 0–3 green, 4–6 yellow, 7–10 red. If the request fails or the region has no traffic data, it turns all lamps off and retries every minute. The endpoint is not an official API and may change or disappear.
+
+The `airQuality` script reads the US AQI for `AIR_QUALITY_CITY` from the WAQI API (`https://api.waqi.info/feed/<city>/?token=...`, `src/airQuality/waqiAirQuality.ts`) every 10 minutes and lights one lamp: 0–50 green, 51–100 yellow, above 100 red. WAQI returns `aqi: "-"` when a station has no current data; that is treated as an error.
 
 The `telegram-hearts` script logs into a Telegram user account with `@mtcute/node`, prints QR login codes with `qrcode`, listens to `TELEGRAM_CHAT_ID`, and maps `❤️`, `💛`, `💚` to `red`, `yellow`, `green`. Regular heart messages and animated heart/dice messages blink the selected lamp 3 times. New heart commands cancel the previous blink sequence.
 

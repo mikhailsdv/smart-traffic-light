@@ -117,7 +117,7 @@ export const trafficLightUi = `<!DOCTYPE html>
     .scenario.active .mini-cycle i:nth-child(2) { animation-delay: -6s; }
     .scenario.active .mini-cycle i:nth-child(3) { animation-delay: -3s; }
     .scenario.active .mini-pairs i { animation: mini-pairs 3.6s steps(1) infinite; }
-    .scenario.active .mini-traffic i.lit { animation: pulse 2s ease-in-out infinite; }
+    .scenario.active .mini-pulse i.lit { animation: pulse 2s ease-in-out infinite; }
     .scenario.active .mini-pairs i:nth-child(1) { animation-delay: -2.4s; }
     .scenario.active .mini-pairs i:nth-child(2) { animation-delay: -1.2s; }
 
@@ -197,10 +197,18 @@ export const trafficLightUi = `<!DOCTYPE html>
           </span>
         </button>
         <button class="scenario" data-script="traffic" onclick="startScript('traffic')">
-          <span class="mini mini-traffic"><i></i><i></i><i class="lit"></i></span>
+          <span class="mini mini-pulse"><i></i><i></i><i class="lit"></i></span>
           <span class="scenario-text">
             <span class="scenario-name">Пробки</span>
             <span class="scenario-desc">Цвет по баллам Яндекс Пробок</span>
+            <span class="badge">Идёт</span>
+          </span>
+        </button>
+        <button class="scenario" data-script="airQuality" onclick="startScript('airQuality')">
+          <span class="mini mini-pulse"><i></i><i class="lit"></i><i></i></span>
+          <span class="scenario-text">
+            <span class="scenario-name">Воздух</span>
+            <span class="scenario-desc">Качество воздуха (AQI)</span>
             <span class="badge">Идёт</span>
           </span>
         </button>
@@ -224,7 +232,7 @@ export const trafficLightUi = `<!DOCTYPE html>
     let pendingToggles = 0;
     const pollIntervalMs = 5000;
     const scriptPollIntervalMs = 1000;
-    const scriptTitles = { cycle: 'Цикл', happyBirthday: 'С днём рождения', traffic: 'Пробки' };
+    const scriptTitles = { cycle: 'Цикл', happyBirthday: 'С днём рождения', traffic: 'Пробки', airQuality: 'Воздух' };
     let pollTimer = null;
     let polling = false;
     function updateUI() {
