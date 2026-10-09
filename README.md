@@ -16,61 +16,62 @@ Create `.env` from `.env.example`.
 
 Wiring diagram, parts list, Tasmota flashing and step-by-step build guide: [docs/hardware.md](docs/hardware.md).
 
+## Scenarios
+
+| Script | What it does | Required `.env` |
+|---|---|---|
+| `cycle` | Red → yellow → green, 3 seconds each | — |
+| `happyBirthday` | Random pairs of lamps every 3 seconds | — |
+| `traffic` | City traffic level from Yandex: 0–3 green, 4–6 yellow, 7–10 red | `TRAFFIC_REGION_ID` |
+| `airQuality` | City air quality (US AQI) from WAQI: 0–50 green, 51–100 yellow, above 100 red | `AIR_QUALITY_CITY`, `WAQI_TOKEN` |
+| `telegram-hearts` | Blinks a lamp when a heart emoji arrives in Telegram | `TELEGRAM_API_ID`, `TELEGRAM_API_HASH`, `TELEGRAM_CHAT_ID` |
+
+Every script also needs the variables of its provider:
+
+- `tasmota`: `TASMOTA_HOST`
+- `yandex`: `YANDEX_CLIENT_ID`, `YANDEX_CLIENT_SECRET`, `YANDEX_REFRESH_TOKEN`, `YANDEX_RED_DEVICE_ID`, `YANDEX_YELLOW_DEVICE_ID`, `YANDEX_GREEN_DEVICE_ID`
+
 ## Usage
 
-Run `cycle` locally with Tasmota:
+Run a script in watch mode:
+
+```bash
+npm run dev -- --script <script> --provider tasmota|yandex
+```
+
+Examples:
 
 ```bash
 npm run dev -- --script cycle --provider tasmota
-```
-
-Run `cycle` locally with Yandex:
-
-```bash
-npm run dev -- --script cycle --provider yandex
-```
-
-Run Telegram heart listener locally:
-
-```bash
-npm run dev -- --script telegram-hearts --provider yandex
-```
-
-Run traffic mode locally (set `TRAFFIC_REGION_ID` in `.env`, for example `162` for Almaty):
-
-```bash
-npm run dev -- --script traffic --provider yandex
-```
-
-Run air quality mode locally (set `AIR_QUALITY_CITY` and `WAQI_TOKEN` in `.env`; get a free token at https://aqicn.org/data-platform/token/):
-
-```bash
-npm run dev -- --script airQuality --provider yandex
-```
-
-Run Happy Birthday mode locally:
-
-```bash
 npm run dev -- --script happyBirthday --provider yandex
+npm run dev -- --script traffic --provider yandex
+npm run dev -- --script airQuality --provider yandex
+npm run dev -- --script telegram-hearts --provider yandex
 ```
 
 Build and run compiled code:
 
 ```bash
 npm run build
-npm run start -- --script cycle --provider yandex
-npm run start -- --script telegram-hearts --provider yandex
-npm run start -- --script happyBirthday --provider yandex
+npm run start -- --script <script> --provider yandex
 ```
 
 ## Web UI
-
-The web UI has a floating provider switch for `Tasmota` and `Yandex`.
 
 ```bash
 npm run dev:web
 npm run start:web
 ```
+
+Opens on `http://localhost:3000`; set `PORT` in `.env` to change the port.
+
+- The header shows the current mode and has the `Tasmota` / `Yandex` provider switch and a light/dark theme toggle.
+- Tap a lamp to toggle it.
+- "Сценарии" starts `cycle`, `happyBirthday`, `traffic` or `airQuality` inside the web server; the red button stops the running scenario and turns all lamps off. Tapping a lamp also stops the scenario.
+- "Все лампы" turns all lamps on or off at once.
+- Lamp state is read from the selected provider every 5 seconds, so changes made from the Yandex app or by voice show up in the UI.
+
+The web UI has no authentication. Do not expose it beyond your local network.
 
 ## Yandex OAuth
 
@@ -104,7 +105,7 @@ Authorization flow:
    ```bash
    npm run yandex:user-info
    ```
-9. Find the `Светофор` group and its lamp ids:
+9. Find the lamp ids and put them into `YANDEX_RED_DEVICE_ID`, `YANDEX_YELLOW_DEVICE_ID` and `YANDEX_GREEN_DEVICE_ID`. `npm run yandex:user-info` lists all devices; if the lamps are in the `Светофор` group, this prints only them:
    ```bash
    npm run yandex:traffic-light-group
    ```
@@ -133,31 +134,76 @@ The listener reacts only to messages from `TELEGRAM_CHAT_ID`:
 - `💛` blinks the yellow lamp 3 times
 - `💚` blinks the green lamp 3 times
 
-A new heart message interrupts the previous blink sequence.
+A new heart message interrupts the previous blink sequence. Animated heart messages do the same blink sequence.
 
-Animated heart messages do the same blink sequence.
+## Traffic
+
+The `traffic` script uses the unofficial Yandex endpoint `export.yandex.ru/bar/reginfo.xml`; it may change or stop working without notice. Set `TRAFFIC_REGION_ID` to the Yandex region id (Almaty `162`, Moscow `213`) and check that the region has traffic data:
+
+```bash
+curl -sS -A "Mozilla/5.0" "https://export.yandex.ru/bar/reginfo.xml?region=162"
+```
+
+The response must contain `<level>` inside `<traffic>`. The script polls every 5 minutes.
+
+## Air Quality
+
+The `airQuality` script uses the [WAQI API](https://aqicn.org/api/). Get a free token at https://aqicn.org/data-platform/token/ and set:
+
+```env
+AIR_QUALITY_CITY=almaty
+WAQI_TOKEN=
+```
+
+`AIR_QUALITY_CITY` can also be `geo:<lat>;<lon>` for the nearest station or `@<station id>` for a specific station. Check the response:
+
+```bash
+curl -sS "https://api.waqi.info/feed/almaty/?token=<token>"
+```
+
+The response must have `"status":"ok"` and a number in `"aqi"`. The script polls every 10 minutes.
+
+If `traffic` or `airQuality` cannot get data, all lamps are turned off and the request is retried every minute.
 
 ## VPS Docker
 
-On VPS, set these values in `.env`:
+VPS uses only the Yandex provider. Set these values in `.env`:
 
 ```env
 YANDEX_CLIENT_ID=
 YANDEX_CLIENT_SECRET=
 YANDEX_REFRESH_TOKEN=
-TELEGRAM_API_ID=
-TELEGRAM_API_HASH=
-TELEGRAM_CHAT_ID=5105631123
 YANDEX_RED_DEVICE_ID=
 YANDEX_YELLOW_DEVICE_ID=
 YANDEX_GREEN_DEVICE_ID=
 ```
 
-The Docker Compose service runs:
+Add the variables of the script you run (see [Scenarios](#scenarios)):
+
+```env
+TRAFFIC_REGION_ID=162
+AIR_QUALITY_CITY=almaty
+WAQI_TOKEN=
+TELEGRAM_API_ID=
+TELEGRAM_API_HASH=
+TELEGRAM_CHAT_ID=
+```
+
+`TASMOTA_HOST` is not needed on VPS.
+
+The Docker Compose service runs `cycle` by default and starts switching real lamps right away:
 
 ```bash
 node dist/index.js --script cycle --provider yandex
 ```
+
+To run another script, change `command` in `compose.yaml`, for example:
+
+```yaml
+command: ["node", "dist/index.js", "--script", "traffic", "--provider", "yandex"]
+```
+
+For `telegram-hearts`, the login QR code is printed in the container logs on the first start; scan it once. The session is saved to `.sessions/`, which is mounted from the host, so restarts do not need a new login.
 
 Start or restart it:
 
