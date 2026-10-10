@@ -52,7 +52,7 @@ Current env variables:
 - `YANDEX_YELLOW_DEVICE_ID`
 - `YANDEX_GREEN_DEVICE_ID`
 - `TRAFFIC_REGION_ID` (Yandex region id for the `traffic` script; Almaty is `162`, Moscow is `213`)
-- `AIR_QUALITY_CITY` (WAQI city or station for the `airQuality` script: `almaty`, `geo:<lat>;<lon>` or `@<station id>`)
+- `AIR_QUALITY_CITY` (WAQI city or station for the `airQuality` script: `almaty`, `geo:<lat>;<lon>`, `@<uid>` for official stations or `A<uid>` without `@` for stations from other networks, e.g. `A414163`)
 - `WAQI_TOKEN` (free token from https://aqicn.org/data-platform/token/; it is sent in the request URL, so do not log request URLs)
 
 `YANDEX_REFRESH_TOKEN` in `.env` is the only persisted Yandex secret. Access tokens are never written to disk: each process exchanges the refresh token for an access token on first use and keeps it in memory. If Yandex returns a new refresh token, it is used for later refreshes within the same process only. Do not print token values in summaries or logs.

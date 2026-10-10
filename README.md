@@ -155,7 +155,19 @@ AIR_QUALITY_CITY=almaty
 WAQI_TOKEN=
 ```
 
-`AIR_QUALITY_CITY` can also be `geo:<lat>;<lon>` for the nearest station or `@<station id>` for a specific station. Check the response:
+`AIR_QUALITY_CITY` can also point to a specific station:
+
+- `geo:<lat>;<lon>` for the nearest station;
+- `@<uid>` for an official station, for example `@8661`;
+- `A<uid>` (no `@`) for stations from other networks, for example `A414163` for [Auezov District, Almaty](https://aqicn.org/station/kazakhstan-auezov-district-almaty/). With `@414163` WAQI answers `Unknown ID`.
+
+`search/?keyword=...` often does not find stations from other networks. To list all stations in an area with their `uid`, names and current AQI (the example covers Almaty):
+
+```bash
+curl -sS "https://api.waqi.info/v2/map/bounds?latlng=43.15,76.75,43.40,77.10&networks=all&token=<token>"
+```
+
+Check the response:
 
 ```bash
 curl -sS "https://api.waqi.info/feed/almaty/?token=<token>"
