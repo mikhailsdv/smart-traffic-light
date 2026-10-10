@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta id="theme-color" name="theme-color" content="#f3f3f0">
+  <title>Светофор</title>
+  <script>
+    const themeStorageKey = 'traffic-light-theme';
+    const systemDarkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    function getStoredTheme() {
+      try { return localStorage.getItem(themeStorageKey); } catch (error) { return null; }
+    }
+    function applyTheme(theme) {
+      document.documentElement.dataset.theme = theme;
+      const meta = document.getElementById('theme-color');
+      if (meta) meta.content = theme === 'dark' ? '#0e0e0f' : '#f3f3f0';
+    }
+    applyTheme(getStoredTheme() || (systemDarkQuery.matches ? 'dark' : 'light'));
+  </script>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="page">
+    <header class="header">
+      <h1 class="title">Светофор</h1>
+      <div class="header-controls">
+        <div class="provider-switch">
+          <button id="provider-tasmota" onclick="selectProvider('tasmota')">Tasmota</button>
+          <button id="provider-yandex" onclick="selectProvider('yandex')">Yandex</button>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Переключить тему" title="Переключить тему">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="currentColor" stroke="none"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>
+        </button>
+      </div>
+      <div id="mode" class="mode"><span class="mode-dot"></span><span id="mode-text">Ручное управление</span></div>
+    </header>
+
+    <section class="stage">
+      <div class="traffic-light">
+        <button id="red" class="lamp red" onclick="clickLamp('red')" aria-label="Красная лампа"></button>
+        <button id="yellow" class="lamp yellow" onclick="clickLamp('yellow')" aria-label="Жёлтая лампа"></button>
+        <button id="green" class="lamp green" onclick="clickLamp('green')" aria-label="Зелёная лампа"></button>
+      </div>
+      <p id="hint" class="hint">Нажмите на лампу, чтобы переключить её</p>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Сценарии</h2>
+      <div class="scenario-list">
+        <button class="scenario" data-script="cycle" onclick="startScript('cycle')">
+          <span class="mini mini-cycle"><i class="lit"></i><i></i><i></i></span>
+          <span class="scenario-text">
+            <span class="scenario-name">Цикл</span>
+            <span class="scenario-desc">Красный → жёлтый → зелёный</span>
+            <span class="badge">Идёт</span>
+          </span>
+        </button>
+        <button class="scenario" data-script="happyBirthday" onclick="startScript('happyBirthday')">
+          <span class="mini mini-pairs"><i class="lit"></i><i class="lit"></i><i></i></span>
+          <span class="scenario-text">
+            <span class="scenario-name">С днём рождения</span>
+            <span class="scenario-desc">Случайные пары ламп</span>
+            <span class="badge">Идёт</span>
+          </span>
+        </button>
+        <button class="scenario" data-script="traffic" onclick="startScript('traffic')">
+          <span class="mini mini-pulse"><i></i><i></i><i class="lit"></i></span>
+          <span class="scenario-text">
+            <span class="scenario-name">Пробки</span>
+            <span class="scenario-desc">Цвет по баллам Яндекс Пробок</span>
+            <span class="badge">Идёт</span>
+          </span>
+        </button>
+        <button class="scenario" data-script="airQuality" onclick="startScript('airQuality')">
+          <span class="mini mini-pulse"><i></i><i class="lit"></i><i></i></span>
+          <span class="scenario-text">
+            <span class="scenario-name">Воздух</span>
+            <span class="scenario-desc">Качество воздуха (AQI)</span>
+            <span class="badge">Идёт</span>
+          </span>
+        </button>
+      </div>
+      <button id="stop-script" class="stop" onclick="stopScript()">Остановить сценарий</button>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Все лампы</h2>
+      <div class="grid">
+        <button class="power" onclick="setAll(true)"><span class="dots on"><i></i><i></i><i></i></span>Включить</button>
+        <button class="power" onclick="setAll(false)"><span class="dots off"><i></i><i></i><i></i></span>Выключить</button>
+      </div>
+    </section>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
