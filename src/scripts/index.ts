@@ -1,8 +1,8 @@
-import { airQualityScript } from "./airQuality.js";
+import { airQualityScript } from "./airQuality/index.js";
 import { cycleScript } from "./cycle.js";
 import { happyBirthdayScript } from "./happyBirthday.js";
-import { telegramHeartsScript } from "./telegramHearts.js";
-import { trafficScript } from "./traffic.js";
+import { telegramHeartsScript } from "./telegramHearts/index.js";
+import { trafficScript } from "./traffic/index.js";
 import type { TrafficLightScript } from "../types.js";
 
 export const trafficLightScripts: TrafficLightScript[] = [

@@ -1,7 +1,7 @@
-import { getRequiredEnv } from "../env.js";
-import { getYandexTrafficInfo } from "../traffic/yandexTraffic.js";
-import type { TrafficLightColor } from "../types.js";
-import { createIndicatorScript } from "./createIndicatorScript.js";
+import { getRequiredEnv } from "../../env.js";
+import type { TrafficLightColor } from "../../types.js";
+import { createIndicatorScript } from "../createIndicatorScript.js";
+import { getYandexTrafficInfo } from "./yandexTraffic.js";
 
 function getColorByTrafficLevel(level: number): TrafficLightColor {
   if (level <= 3) {
