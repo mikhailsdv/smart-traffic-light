@@ -23,7 +23,7 @@ Wiring diagram, parts list, Tasmota flashing and step-by-step build guide: [docs
 | `cycle` | Red → yellow → green, 3 seconds each | — |
 | `happyBirthday` | Random pairs of lamps every 3 seconds | — |
 | `traffic` | City traffic level from Yandex: 0–3 green, 4–6 yellow, 7–10 red | `TRAFFIC_REGION_ID` |
-| `airQuality` | City air quality (US AQI) from WAQI: 0–50 green, 51–100 yellow, above 100 red | `AIR_QUALITY_CITY`, `WAQI_TOKEN` |
+| `airQuality` | City air quality (US AQI) from IQAir: 0–50 green, 51–100 yellow, above 100 red | `IQAIR_API_KEY` and `AIR_QUALITY_IQAIR_URL` or `AIR_QUALITY_LAT` + `AIR_QUALITY_LON` |
 | `telegram-hearts` | Blinks a lamp when a heart emoji arrives in Telegram | `TELEGRAM_API_ID`, `TELEGRAM_API_HASH`, `TELEGRAM_CHAT_ID` |
 
 Every script also needs the variables of its provider:
@@ -148,20 +148,30 @@ The response must contain `<level>` inside `<traffic>`. The script polls every 5
 
 ## Air Quality
 
-The `airQuality` script uses the [WAQI API](https://aqicn.org/api/). Get a free token at https://aqicn.org/data-platform/token/ and set:
+The `airQuality` script uses the [IQAir AirVisual API](https://api-docs.iqair.com/). Get an API key at https://dashboard.iqair.com/ and set the location with a link to a city or station page from iqair.com:
 
 ```env
-AIR_QUALITY_CITY=almaty
-WAQI_TOKEN=
+IQAIR_API_KEY=
+AIR_QUALITY_IQAIR_URL=https://www.iqair.com/air-quality/kazakhstan/almaty-oblysy/almaty
 ```
 
-`AIR_QUALITY_CITY` can also be `geo:<lat>;<lon>` for the nearest station or `@<station id>` for a specific station. Check the response:
+The link must look like `https://www.iqair.com/air-quality/<country>/<state>/<city>` (or `/air-quality-map/...` from the map) or `.../<city>/<station>`. Slugs are turned into names (`almaty-oblysy` → `Almaty Oblysy`) and sent to `/v2/city` or `/v2/station`. `/v2/station` is not available on the free Community plan, so on that plan use a city link.
+
+Or set coordinates instead (the nearest city with data is used):
+
+```env
+IQAIR_API_KEY=
+AIR_QUALITY_LAT=43.2389
+AIR_QUALITY_LON=76.8897
+```
+
+If `AIR_QUALITY_LAT` or `AIR_QUALITY_LON` is set, coordinates are used and `AIR_QUALITY_IQAIR_URL` is ignored. Check the response:
 
 ```bash
-curl -sS "https://api.waqi.info/feed/almaty/?token=<token>"
+curl -sS "https://api.airvisual.com/v2/nearest_city?lat=43.2389&lon=76.8897&key=<key>"
 ```
 
-The response must have `"status":"ok"` and a number in `"aqi"`. The script polls every 10 minutes.
+The response must have `"status":"success"` and a number in `data.current.pollution.aqius`. The script polls every 10 minutes.
 
 If `traffic` or `airQuality` cannot get data, all lamps are turned off and the request is retried every minute.
 
@@ -182,8 +192,8 @@ Add the variables of the script you run (see [Scenarios](#scenarios)):
 
 ```env
 TRAFFIC_REGION_ID=162
-AIR_QUALITY_CITY=almaty
-WAQI_TOKEN=
+IQAIR_API_KEY=
+AIR_QUALITY_IQAIR_URL=https://www.iqair.com/air-quality/kazakhstan/almaty-oblysy/almaty
 TELEGRAM_API_ID=
 TELEGRAM_API_HASH=
 TELEGRAM_CHAT_ID=
