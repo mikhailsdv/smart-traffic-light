@@ -11,7 +11,7 @@ Main code lives in `src/`:
 - `src/controller/SmartTrafficLightController.ts` turns high-level traffic light state into provider calls.
 - `src/providers/` contains control backends.
 - `src/scripts/` contains traffic light scripts implementing `TrafficLightScript`. A script without its own dependencies is a single file (`cycle.ts`, `happyBirthday.ts`). A script with code used only by it is a folder with `index.ts` exporting the script plus that code (`traffic/`, `airQuality/`, `telegramHearts/`). Keep script-only code inside the script folder; put code shared by several scripts in `src/scripts/` (like `createIndicatorScript.ts`) or in `src/utils/`.
-- `src/web/` contains a small HTTP server and embedded UI.
+- `src/web/` contains a small HTTP server and the web UI. The UI is plain HTML/CSS/JS without a bundler in `src/web/public/` (`index.html`, `styles.css`, `app.js`); the server reads these files from disk, and `npm run build` copies them to `dist/web/public/`.
 - `src/tools/` contains one-off CLI helpers, mostly for Yandex OAuth.
 - `src/utils/` contains small utilities. Keep utility types inline in the same utility file unless splitting is clearly useful.
 - `firmware/traffic-light-matter/traffic-light-matter.ino` is an old Arduino/Matter firmware sketch kept for reference.
@@ -103,7 +103,7 @@ The `telegram-hearts` script logs into a Telegram user account with `@mtcute/nod
 
 `src/web/server.ts` is intentionally small and can switch between `TasmotaProvider` and `YandexProvider` from the UI. It serves:
 
-- `GET /`
+- `GET /`, `GET /styles.css`, `GET /app.js` (only files listed in `staticFiles` in `server.ts`; add new UI files there)
 - `GET /status?provider=tasmota|yandex` (reads the real lamp state from the provider)
 - `POST /toggle` (requires `Content-Type: application/json`, otherwise `415`)
 - `POST /scripts/start` with `{ provider, script }`

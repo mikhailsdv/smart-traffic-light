@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "dev:web": "tsx watch src/web/server.ts",
-    "build": "tsc",
+    "build": "tsc && cp -r src/web/public dist/web/",
     "start": "node dist/index.js",
     "start:web": "node dist/web/server.js",
     "yandex:oauth-url": "tsx src/tools/yandexOAuthUrl.ts",
