@@ -1,4 +1,4 @@
-import type { TrafficLightColor } from "../types.js";
+import type { TrafficLightColor } from "../../types.js";
 
 const colorByHeart = new Map<string, TrafficLightColor>([
   ["❤", "red"],
