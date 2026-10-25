@@ -1,7 +1,7 @@
-import { getIqairAirQuality, parseIqairUrl, type AirQualityLocation } from "../airQuality/iqairAirQuality.js";
-import { getRequiredEnv, getRequiredNumberEnv } from "../env.js";
-import type { TrafficLightColor } from "../types.js";
-import { createIndicatorScript } from "./createIndicatorScript.js";
+import { getRequiredEnv, getRequiredNumberEnv } from "../../env.js";
+import type { TrafficLightColor } from "../../types.js";
+import { createIndicatorScript } from "../createIndicatorScript.js";
+import { getIqairAirQuality, parseIqairUrl, type AirQualityLocation } from "./iqairAirQuality.js";
 
 function getColorByAqi(aqi: number): TrafficLightColor {
   if (aqi <= 50) {

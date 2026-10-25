@@ -1,12 +1,19 @@
 import "dotenv/config";
+import { readFile } from "node:fs/promises";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { fileURLToPath } from "node:url";
 import { SmartTrafficLightController } from "../controller/SmartTrafficLightController.js";
 import { createProvider, isProviderName, providerNames, type ProviderName } from "../providers/createProvider.js";
 import { trafficLightColors, type TrafficLightColor, type TrafficLightProvider, type TrafficLightState } from "../types.js";
 import { WebScriptRunner } from "./scriptRunner.js";
-import { trafficLightUi } from "./ui.js";
 
 const port = Number(process.env.PORT ?? 3_000);
+const publicDir = new URL("./public/", import.meta.url);
+const staticFiles: Record<string, { file: string; contentType: string }> = {
+  "/": { file: "index.html", contentType: "text/html; charset=utf-8" },
+  "/styles.css": { file: "styles.css", contentType: "text/css; charset=utf-8" },
+  "/app.js": { file: "app.js", contentType: "text/javascript; charset=utf-8" },
+};
 const providers = new Map<ProviderName, TrafficLightProvider>();
 const pendingStateReads = new Map<ProviderName, Promise<TrafficLightState>>();
 const webScriptNames = ["cycle", "happyBirthday", "traffic", "airQuality"];
@@ -22,8 +29,10 @@ function sendJson(response: ServerResponse, statusCode: number, body: unknown): 
   response.end(JSON.stringify(body));
 }
 
-function sendHtml(response: ServerResponse, body: string): void {
-  response.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+async function sendStaticFile(response: ServerResponse, file: string, contentType: string): Promise<void> {
+  const body = await readFile(fileURLToPath(new URL(file, publicDir)));
+
+  response.writeHead(200, { "Content-Type": contentType, "Cache-Control": "no-cache" });
   response.end(body);
 }
 
@@ -233,8 +242,10 @@ const server = createServer((request, response) => {
   void (async () => {
     const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
 
-    if (request.method === "GET" && url.pathname === "/") {
-      sendHtml(response, trafficLightUi);
+    const staticFile = request.method === "GET" ? staticFiles[url.pathname] : undefined;
+
+    if (staticFile) {
+      await sendStaticFile(response, staticFile.file, staticFile.contentType);
       return;
     }
 

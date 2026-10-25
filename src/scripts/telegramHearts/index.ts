@@ -1,5 +1,5 @@
-import { TelegramHeartTrafficLightBot } from "../telegram/TelegramHeartTrafficLightBot.js";
-import type { TrafficLightScript } from "../types.js";
+import type { TrafficLightScript } from "../../types.js";
+import { TelegramHeartTrafficLightBot } from "./TelegramHeartTrafficLightBot.js";
 
 export const telegramHeartsScript: TrafficLightScript = {
   name: "telegram-hearts",

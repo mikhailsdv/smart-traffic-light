@@ -1,5 +1,5 @@
-import type { TrafficLightColor, TrafficLightController } from "../types.js";
-import { delay } from "../utils/delay.js";
+import type { TrafficLightColor, TrafficLightController } from "../../types.js";
+import { delay } from "../../utils/delay.js";
 
 const blinkDelayMs = 250;
 

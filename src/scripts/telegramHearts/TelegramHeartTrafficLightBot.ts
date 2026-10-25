@@ -2,9 +2,9 @@ import { Dispatcher, filters } from "@mtcute/dispatcher";
 import { TelegramClient } from "@mtcute/node";
 import { mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { getRequiredEnv, getRequiredNumberEnv } from "../env.js";
-import type { TrafficLightController } from "../types.js";
-import { showQr } from "../utils/showQr.js";
+import { getRequiredEnv, getRequiredNumberEnv } from "../../env.js";
+import type { TrafficLightController } from "../../types.js";
+import { showQr } from "../../utils/showQr.js";
 import { getTrafficLightColorByHeart } from "./hearts.js";
 import { TelegramHeartCommandRunner } from "./TelegramHeartCommandRunner.js";
 

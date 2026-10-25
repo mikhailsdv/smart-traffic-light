@@ -10,8 +10,8 @@ Main code lives in `src/`:
 - `src/types.ts` defines shared traffic light types and interfaces.
 - `src/controller/SmartTrafficLightController.ts` turns high-level traffic light state into provider calls.
 - `src/providers/` contains control backends.
-- `src/scripts/` contains traffic light scripts implementing `TrafficLightScript`.
-- `src/web/` contains a small HTTP server and embedded UI.
+- `src/scripts/` contains traffic light scripts implementing `TrafficLightScript`. A script without its own dependencies is a single file (`cycle.ts`, `happyBirthday.ts`). A script with code used only by it is a folder with `index.ts` exporting the script plus that code (`traffic/`, `airQuality/`, `telegramHearts/`). Keep script-only code inside the script folder; put code shared by several scripts in `src/scripts/` (like `createIndicatorScript.ts`) or in `src/utils/`.
+- `src/web/` contains a small HTTP server and the web UI. The UI is plain HTML/CSS/JS without a bundler in `src/web/public/` (`index.html`, `styles.css`, `app.js`); the server reads these files from disk, and `npm run build` copies them to `dist/web/public/`.
 - `src/tools/` contains one-off CLI helpers, mostly for Yandex OAuth.
 - `src/utils/` contains small utilities. Keep utility types inline in the same utility file unless splitting is clearly useful.
 - `firmware/traffic-light-matter/traffic-light-matter.ino` is an old Arduino/Matter firmware sketch kept for reference.
@@ -94,9 +94,9 @@ The `happyBirthday` script switches every 3 seconds between random two-lamp pair
 
 Indicator scripts (`traffic`, `airQuality`) are built with `createIndicatorScript(...)` from `src/scripts/createIndicatorScript.ts`. `createReader()` runs once at start (read env there so missing variables fail immediately); the returned reader is polled, its color is shown with `controller.setOnly(...)`, and on any error all lamps are turned off and the reader is retried after `retryIntervalMs`.
 
-The `traffic` script reads the Yandex traffic level (0–10) for `TRAFFIC_REGION_ID` every 5 minutes from the unofficial `https://export.yandex.ru/bar/reginfo.xml?region=<id>` endpoint (`src/traffic/yandexTraffic.ts`) and lights one lamp: 0–3 green, 4–6 yellow, 7–10 red. If the request fails or the region has no traffic data, it turns all lamps off and retries every minute. The endpoint is not an official API and may change or disappear.
+The `traffic` script reads the Yandex traffic level (0–10) for `TRAFFIC_REGION_ID` every 5 minutes from the unofficial `https://export.yandex.ru/bar/reginfo.xml?region=<id>` endpoint (`src/scripts/traffic/yandexTraffic.ts`) and lights one lamp: 0–3 green, 4–6 yellow, 7–10 red. If the request fails or the region has no traffic data, it turns all lamps off and retries every minute. The endpoint is not an official API and may change or disappear.
 
-The `airQuality` script reads the US AQI (`data.current.pollution.aqius`) from the IQAir AirVisual API (`src/airQuality/iqairAirQuality.ts`) every 10 minutes and lights one lamp: 0–50 green, 51–100 yellow, above 100 red. With `AIR_QUALITY_LAT`/`AIR_QUALITY_LON` it calls `https://api.airvisual.com/v2/nearest_city?lat=...&lon=...&key=...`, otherwise it parses `AIR_QUALITY_IQAIR_URL` with `parseIqairUrl(...)`, turning slugs into title-cased names (`almaty-oblysy` → `Almaty Oblysy`), and calls `https://api.airvisual.com/v2/city?city=...&state=...&country=...&key=...`, or `/v2/station` with an extra `station` when the link has a station segment (`/v2/station` needs a paid IQAir plan). A response with `status` other than `"success"` (e.g. `city_not_found`) or without a numeric `aqius` is treated as an error.
+The `airQuality` script reads the US AQI (`data.current.pollution.aqius`) from the IQAir AirVisual API (`src/scripts/airQuality/iqairAirQuality.ts`) every 10 minutes and lights one lamp: 0–50 green, 51–100 yellow, above 100 red. With `AIR_QUALITY_LAT`/`AIR_QUALITY_LON` it calls `https://api.airvisual.com/v2/nearest_city?lat=...&lon=...&key=...`, otherwise it parses `AIR_QUALITY_IQAIR_URL` with `parseIqairUrl(...)`, turning slugs into title-cased names (`almaty-oblysy` → `Almaty Oblysy`), and calls `https://api.airvisual.com/v2/city?city=...&state=...&country=...&key=...`, or `/v2/station` with an extra `station` when the link has a station segment (`/v2/station` needs a paid IQAir plan). A response with `status` other than `"success"` (e.g. `city_not_found`) or without a numeric `aqius` is treated as an error.
 
 The `telegram-hearts` script logs into a Telegram user account with `@mtcute/node`, prints QR login codes with `qrcode`, listens to `TELEGRAM_CHAT_ID`, and maps `❤️`, `💛`, `💚` to `red`, `yellow`, `green`. Regular heart messages and animated heart/dice messages blink the selected lamp 3 times. New heart commands cancel the previous blink sequence.
 
@@ -104,7 +104,7 @@ The `telegram-hearts` script logs into a Telegram user account with `@mtcute/nod
 
 `src/web/server.ts` is intentionally small and can switch between `TasmotaProvider` and `YandexProvider` from the UI. It serves:
 
-- `GET /`
+- `GET /`, `GET /styles.css`, `GET /app.js` (only files listed in `staticFiles` in `server.ts`; add new UI files there)
 - `GET /status?provider=tasmota|yandex` (reads the real lamp state from the provider)
 - `POST /toggle` (requires `Content-Type: application/json`, otherwise `415`)
 - `POST /scripts/start` with `{ provider, script }`
