@@ -52,8 +52,9 @@ Current env variables:
 - `YANDEX_YELLOW_DEVICE_ID`
 - `YANDEX_GREEN_DEVICE_ID`
 - `TRAFFIC_REGION_ID` (Yandex region id for the `traffic` script; Almaty is `162`, Moscow is `213`)
-- `AIR_QUALITY_CITY` (WAQI city or station for the `airQuality` script: `almaty`, `geo:<lat>;<lon>` or `@<station id>`)
-- `WAQI_TOKEN` (free token from https://aqicn.org/data-platform/token/; it is sent in the request URL, so do not log request URLs)
+- `IQAIR_API_KEY` (IQAir AirVisual API key from https://dashboard.iqair.com/; it is sent in the request URL, so do not log request URLs)
+- `AIR_QUALITY_IQAIR_URL` (iqair.com city or station page for the `airQuality` script: `https://www.iqair.com/air-quality/<country>/<state>/<city>[/<station>]`, `/air-quality-map/...` is accepted too)
+- `AIR_QUALITY_LAT`, `AIR_QUALITY_LON` (coordinates for the `airQuality` script; the nearest IQAir city is used; take priority over `AIR_QUALITY_IQAIR_URL` when either is set)
 
 `YANDEX_REFRESH_TOKEN` in `.env` is the only persisted Yandex secret. Access tokens are never written to disk: each process exchanges the refresh token for an access token on first use and keeps it in memory. If Yandex returns a new refresh token, it is used for later refreshes within the same process only. Do not print token values in summaries or logs.
 
@@ -95,7 +96,7 @@ Indicator scripts (`traffic`, `airQuality`) are built with `createIndicatorScrip
 
 The `traffic` script reads the Yandex traffic level (0–10) for `TRAFFIC_REGION_ID` every 5 minutes from the unofficial `https://export.yandex.ru/bar/reginfo.xml?region=<id>` endpoint (`src/traffic/yandexTraffic.ts`) and lights one lamp: 0–3 green, 4–6 yellow, 7–10 red. If the request fails or the region has no traffic data, it turns all lamps off and retries every minute. The endpoint is not an official API and may change or disappear.
 
-The `airQuality` script reads the US AQI for `AIR_QUALITY_CITY` from the WAQI API (`https://api.waqi.info/feed/<city>/?token=...`, `src/airQuality/waqiAirQuality.ts`) every 10 minutes and lights one lamp: 0–50 green, 51–100 yellow, above 100 red. WAQI returns `aqi: "-"` when a station has no current data; that is treated as an error.
+The `airQuality` script reads the US AQI (`data.current.pollution.aqius`) from the IQAir AirVisual API (`src/airQuality/iqairAirQuality.ts`) every 10 minutes and lights one lamp: 0–50 green, 51–100 yellow, above 100 red. With `AIR_QUALITY_LAT`/`AIR_QUALITY_LON` it calls `https://api.airvisual.com/v2/nearest_city?lat=...&lon=...&key=...`, otherwise it parses `AIR_QUALITY_IQAIR_URL` with `parseIqairUrl(...)`, turning slugs into title-cased names (`almaty-oblysy` → `Almaty Oblysy`), and calls `https://api.airvisual.com/v2/city?city=...&state=...&country=...&key=...`, or `/v2/station` with an extra `station` when the link has a station segment (`/v2/station` needs a paid IQAir plan). A response with `status` other than `"success"` (e.g. `city_not_found`) or without a numeric `aqius` is treated as an error.
 
 The `telegram-hearts` script logs into a Telegram user account with `@mtcute/node`, prints QR login codes with `qrcode`, listens to `TELEGRAM_CHAT_ID`, and maps `❤️`, `💛`, `💚` to `red`, `yellow`, `green`. Regular heart messages and animated heart/dice messages blink the selected lamp 3 times. New heart commands cancel the previous blink sequence.
 
